@@ -1,82 +1,129 @@
 % ==============================================================================
 % DATA TYPES
 % ==============================================================================
-sort 
-	Meal = struct Doner | Souvlaki | Skyr | Biryani;
-	TableID = struct Table1 | Table2;
-	OrderID = Nat;
-	PlateID = Nat;
-	Money = Nat;
-	OrderStatus = struct InPreparation | ReadyForLoading | OnBelt | Delivered | Collected;
-	OrderEntry = struct order(m: Meal, t: TableID, s: OrderStatus);
-	Plate = struct plate(p_id: PlateID, o_id: OrderID, t_id: TableID);
-	Position = Nat;
-	PlateSlot = struct Empty | Occupied(p: Plate);
-	GateState = struct Closed | Opening | Open | Closing;
-	PusherState = struct Retracted | Extending | Extended | Retracting;
-	ConveyorState = struct Stopped | Moving;
-	SystemMode = struct Normal | Emergency;
+sort
+    Meal = struct Doner | Souvlaki | Skyr | Biryani;
+    TableID = struct Table1 | Table2;
+    OrderID = Nat;
+    PlateID = Nat;
+    Money = Nat;
+    OrderStatus =
+        struct InPreparation | ReadyForLoading | OnBelt | Delivered | Collected;
+    OrderEntry = struct order(m: Meal, t: TableID, s: OrderStatus);
+    OrderStatusInfo =
+        struct statusInfo(orderId: OrderID, status: OrderStatus);
+    Plate = struct plate(p_id: PlateID, o_id: OrderID, t_id: TableID);
+    Position = Nat;
+    PlateSlot = struct Empty | Occupied(p: Plate);
+    GateState = struct Closed | Opening | Open | Closing;
+    PusherState = struct Retracted | Extending | Extended | Retracting;
+    ConveyorState = struct Stopped | Moving;
+    SystemMode = struct Normal | Emergency;
 
 % ==============================================================================
 % MAPS & EQUATIONS
 % ==============================================================================
 map
-	valid_position: Nat -> Bool;
-	belt: Position -> PlateSlot;
-	boxes: TableID -> PlateSlot;
-	price: Meal -> Money;
-	bill: TableID -> Money;
-	orders: OrderID -> OrderEntry;
+    valid_position: Nat -> Bool;
+    belt: Position -> PlateSlot;
+    boxes: TableID -> PlateSlot;
+    price: Meal -> Money;
+    bill: TableID -> Money;
+    statusesForTable:
+        (OrderID -> OrderEntry) # FSet(OrderID) # TableID
+        -> FSet(OrderStatusInfo);
 
-% Explicit variable declaration required for equations
-var 
-	p: Position;
+var
+    pos: Position;
+    om: OrderID -> OrderEntry;
+    ids: FSet(OrderID);
+    table: TableID;
 
 eqn
-	valid_position(p) = (p <= 9);
+    valid_position(pos) = (pos <= 9);
+
+    statusesForTable(om, {}, table) = {};
+
+    ids != {} ->
+      statusesForTable(om, ids, table) =
+        if(t(om(pick(ids))) == table,
+           {statusInfo(pick(ids), s(om(pick(ids))))}
+             + statusesForTable(om, ids - {pick(ids)}, table),
+           statusesForTable(om, ids - {pick(ids)}, table));
 
 % ==============================================================================
 % ACTIONS
 % ==============================================================================
 act
-	% External actions
-	AcceptOrder : Meal # TableID;
-	DisplayStatus : TableID;
-	CalculateBill : TableID;
-	AddPlate : OrderID # TableID;
-	LoadPlate : PlateID;
-	StopLoading;
-	StartEmergency;
-	EndEmergency;
-	Advance : Position;
-	StopConveyor;
-	OpenInnerGate;
-	OpenOuterGate;
-	CloseInnerGate;
-	CloseOuterGate;
-	Push;
-	Retract;
+    % External actions
+    AcceptOrder: Meal # TableID;
+    DisplayStatus: TableID;
+    ShowOrderStatuses: TableID # FSet(OrderStatusInfo);
+    CalculateBill: TableID;
+    AddPlate: OrderID # TableID;
+    LoadPlate: PlateID;
+    StopLoading;
+    StartEmergency;
+    EndEmergency;
+    Advance: Position;
+    StopConveyor;
+    OpenInnerGate;
+    OpenOuterGate;
+    CloseInnerGate;
+    CloseOuterGate;
+    Push;
+    Retract;
 
-	% Internal actions
-	SendOrder : Meal # TableID;
-	ReceivesOrder : Meal # TableID;
-	CheckPosOne;
-	ReportSkip;
-	IssueEmergency;
-	IssueClearEmergency;
-	RequestPermission;
-	ReceivesEmergency;
-	ReceivesClearEmergency;
-	CheckPlate : PlateID # TableID;
-	CheckEmptyBox : TableID;
-	SendSkip;
-	ScanID : PlateID;
+    % Internal actions
+    SendOrder: Meal # TableID;
+    ReceivesOrder: Meal # TableID;
+    CheckPosOne;
+    ReportSkip;
+    IssueEmergency;
+    IssueClearEmergency;
+    RequestPermission;
+    ReceivesEmergency;
+    ReceivesClearEmergency;
+    CheckPlate: PlateID # TableID;
+    CheckEmptyBox: TableID;
+    SendSkip;
+    ScanID: PlateID;
 
 % ==============================================================================
 % PROCESSES & INITIALISATION
 % ==============================================================================
-proc 
-	System = tau;
+proc
+    OrderManager(
+        orders: OrderID -> OrderEntry,
+        existing: FSet(OrderID),
+        nextID: OrderID
+    ) =
+        (nextID < 10) -> (sum meal: Meal, tbl: TableID .
+            AcceptOrder(meal, tbl) .
+            OrderManager(
+                orders[nextID -> order(meal, tbl, InPreparation)],
+                existing + {nextID},
+                nextID + 1
+            ))
 
-init 
-	System;
+      + sum id: OrderID .
+            (id in existing) ->
+                CalculateBill(t(orders(id))) .
+                OrderManager(orders, existing, nextID)
+
+      + sum tbl: TableID .
+            DisplayStatus(tbl) .
+            ShowOrderStatuses(
+                tbl,
+                statusesForTable(orders, existing, tbl)
+            ) .
+            OrderManager(orders, existing, nextID);
+
+    System =
+        OrderManager(
+            lambda id: OrderID . order(Doner, Table1, InPreparation),
+            {},
+            0
+        );
+
+init System;
