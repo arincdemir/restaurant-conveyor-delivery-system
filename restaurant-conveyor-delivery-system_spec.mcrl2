@@ -4,6 +4,7 @@
 sort
     Meal = struct Doner | Souvlaki | Skyr | Biryani;
     TableID = struct Table1 | Table2;
+    StationID = struct TableStation(t: TableID) | Kitchen;
     OrderID = Nat;
     PlateID = Nat;
     Money = Nat;
@@ -13,9 +14,10 @@ sort
     OrderStatusInfo =
         struct statusInfo(orderId: OrderID, status: OrderStatus);
     Plate = struct plate(p_id: PlateID, o_id: OrderID, t_id: TableID);
+    BoxOccupied = Bool;
     Position = Nat;
     PlateSlot = struct Empty | Occupied(p: Plate);
-    GateState = struct Closed | Opening | Open | Closing;
+    GateState = struct Closed | Open;
     PusherState = struct Retracted | Extending | Extended | Retracting;
     ConveyorState = struct Stopped | Moving;
     SystemMode = struct Normal | Emergency;
@@ -66,12 +68,14 @@ act
     EndEmergency;
     Advance: Position;
     StopConveyor;
-    OpenInnerGate;
-    OpenOuterGate;
-    CloseInnerGate;
-    CloseOuterGate;
+    OpenInnerGate: TableID;
+    OpenOuterGate: TableID;
+    CloseInnerGate: TableID;
+    CloseOuterGate: TableID;
     Push;
     Retract;
+    ConveyorMovedNewPosition: TableID # PlateSlot;
+    ConveyorPosition: TableID # PlateSlot;
 
     % Internal actions
     SendOrder: Meal # TableID;
@@ -84,9 +88,11 @@ act
     ReceivesEmergency;
     ReceivesClearEmergency;
     CheckPlate: PlateID # TableID;
-    CheckEmptyBox: TableID;
-    SendSkip;
+    BoxEmptied: TableID;
+    BoxFilled: TableID;
+    SendSkip: StationID;
     ScanID: PlateID;
+    ReceivesConveyorPosition: TableID # PlateSlot;
 
 % ==============================================================================
 % PROCESSES & INITIALISATION
@@ -97,7 +103,8 @@ proc
         existing: FSet(OrderID),
         nextID: OrderID
     ) =
-        (nextID < 10) -> (sum meal: Meal, tbl: TableID .
+        % Accept at most two orders (IDs 0 and 1).
+        (nextID < 2) -> (sum meal: Meal, tbl: TableID .
             AcceptOrder(meal, tbl) .
             OrderManager(
                 orders[nextID -> order(meal, tbl, InPreparation)],
@@ -114,11 +121,47 @@ proc
             DisplayStatus(tbl, statusesForTable(orders, existing, tbl)) .
             OrderManager(orders, existing, nextID);
 
+    % Minimal test belt: repeatedly present one fixed plate to Table1.
+    ConveyorBelt =
+        ConveyorMovedNewPosition(Table1, Occupied(plate(0, 0, Table1))) .
+        ConveyorBelt;
+
+    DeliveryBox(tableID: TableID, innerGateState: GateState, outerGateState: GateState, boxOccupied: BoxOccupied) = 
+        sum inSlot: PlateSlot .
+            ReceivesConveyorPosition(tableID, inSlot) .
+            (inSlot == Empty ||
+             t_id(p(inSlot)) != tableID ||
+             boxOccupied == true ||
+             innerGateState == Closed ||
+             outerGateState == Open) ->
+            SendSkip(TableStation(tableID)) .
+            DeliveryBox(tableID, innerGateState, outerGateState, boxOccupied) <>
+            Push . 
+            BoxFilled(tableID) .
+            CloseInnerGate(tableID) .
+            OpenOuterGate(tableID) .
+            DeliveryBox(tableID, Closed, Open, true)
+        + (boxOccupied && outerGateState == Open) ->
+            BoxEmptied(tableID) .
+            CloseOuterGate(tableID) .
+            OpenInnerGate(tableID) .
+            DeliveryBox(tableID, Open, Closed, false)
+    ;
+
+
     System =
-        OrderManager(
-            lambda id: OrderID . order(Doner, Table1, InPreparation),
-            {},
-            0
+        % Block unmatched sends/receives, only their communication may occur.
+        block({ConveyorMovedNewPosition, ReceivesConveyorPosition},
+            comm({ConveyorMovedNewPosition | ReceivesConveyorPosition -> ConveyorPosition},
+                OrderManager(
+                    lambda id: OrderID . order(Doner, Table1, InPreparation),
+                    {},
+                    0
+                )
+                || ConveyorBelt
+                || DeliveryBox(Table1, Open, Closed, false)
+                || DeliveryBox(Table2, Open, Closed, false)
+            )
         );
 
 init System;
