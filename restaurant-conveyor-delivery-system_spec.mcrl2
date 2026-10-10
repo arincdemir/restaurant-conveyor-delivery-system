@@ -67,6 +67,7 @@ act
     LoadPlate: PlateID;
     StopLoading;
     StartEmergency;
+    OperatorClearEmergency;
     EndEmergency;
     Advance: Position;
     StopConveyor;
@@ -74,8 +75,8 @@ act
     OpenOuterGate: TableID;
     CloseInnerGate: TableID;
     CloseOuterGate: TableID;
-    Push;
-    Retract;
+    Push: TableID;
+    Retract: TableID;
     ConveyorMovedNewPosition: TableID # PlateSlot;
     ConveyorPosition: TableID # PlateSlot;
 
@@ -85,11 +86,9 @@ act
 	OrderToKitchen: OrderID # OrderEntry;
     CheckPosOne;
     ReportSkip;
-    IssueEmergency;
-    IssueClearEmergency;
+    IssueEmergency, ReceivesEmergency, EmergencyReceived: StationID;
+    IssueClearEmergency, ReceivesClearEmergency, EmergencyCleared: StationID;
     RequestPermission;
-    ReceivesEmergency;
-    ReceivesClearEmergency;
     CheckPlate: PlateID # TableID;
     BoxEmptied: TableID;
     BoxFilled: TableID;
@@ -105,34 +104,69 @@ proc
     OrderManager(
         orders: OrderID -> OrderEntry,
         existing: FSet(OrderID),
-        nextID: OrderID
+        nextID: OrderID,
+        mode: SystemMode,
+        emergencySent: Bool,
+        operatorCleared: Bool
     ) =
         % Accept at most two orders (IDs 0 and 1).
-        (nextID < 2) -> (sum meal: Meal, tbl: TableID .
+        (mode == Normal && nextID < 2) -> (sum meal: Meal, tbl: TableID .
             AcceptOrder(meal, tbl) .
 			SendOrder(nextID, order(meal, tbl, InPreparation)) . % Send order to KitchenLoader
             OrderManager(
                 orders[nextID -> order(meal, tbl, InPreparation)],
                 existing + {nextID},
-                nextID + 1
+                nextID + 1,
+                mode,
+                emergencySent,
+                operatorCleared
             ))
 
       + sum id: OrderID .
             (id in existing) ->
                 CalculateBill(t(orders(id))) .
-                OrderManager(orders, existing, nextID)
+                OrderManager()
 
       + sum tbl: TableID .
             DisplayStatus(tbl, statusesForTable(orders, existing, tbl)) .
-            OrderManager(orders, existing, nextID);
+            OrderManager()
+
+      % Record the request immediately. table notification is deferred. probably need to change this later on
+      % But then, we will need to allow the emergency notification between every action sequence. right now, table controller doesn't do that.
+      + (mode == Normal) ->
+            StartEmergency .
+            OrderManager(mode = Emergency, emergencySent = false, operatorCleared = false)
+
+      % Doing the notification later allows the tables to go to their main state to accept the emergency.
+      + (mode == Emergency && !emergencySent) ->
+            (IssueEmergency(TableStation(Table1)) |
+             IssueEmergency(TableStation(Table2))) .
+            OrderManager(emergencySent = true)
+
+      + (mode == Emergency && emergencySent && !operatorCleared) ->
+            OperatorClearEmergency .
+            OrderManager(operatorCleared = true)
+
+      % Again, give time for the tables to go into the clean state so the emergency can be cleared.
+      + (mode == Emergency && emergencySent && operatorCleared) ->
+            (EndEmergency |
+             IssueClearEmergency(TableStation(Table1)) |
+             IssueClearEmergency(TableStation(Table2))) .
+            OrderManager(mode = Normal, emergencySent = false, operatorCleared = false);
 
     % Minimal test belt: repeatedly present one fixed plate to Table1.
     ConveyorBelt =
         ConveyorMovedNewPosition(Table1, Occupied(plate(0, 0, Table1))) .
         ConveyorBelt;
 
-    DeliveryBox(tableID: TableID, innerGateState: GateState, outerGateState: GateState, boxOccupied: BoxOccupied) = 
-        sum inSlot: PlateSlot .
+    DeliveryBox(
+        tableID: TableID,
+        innerGateState: GateState,
+        outerGateState: GateState,
+        boxOccupied: BoxOccupied,
+        mode: SystemMode
+    ) =
+        (mode == Normal) -> (sum inSlot: PlateSlot .
             ReceivesConveyorPosition(tableID, inSlot) .
             (inSlot == Empty ||
              t_id(p(inSlot)) != tableID ||
@@ -140,18 +174,42 @@ proc
              innerGateState == Closed ||
              outerGateState == Open) ->
             SendSkip(TableStation(tableID)) .
-            DeliveryBox(tableID, innerGateState, outerGateState, boxOccupied) <>
-            Push . 
-            BoxFilled(tableID) .
+            DeliveryBox() <>
+            (Push(tableID) | BoxFilled(tableID)) .
+            Retract(tableID) .
             CloseInnerGate(tableID) .
             OpenOuterGate(tableID) .
-            DeliveryBox(tableID, Closed, Open, true)
-        + (boxOccupied && outerGateState == Open) ->
+            DeliveryBox(innerGateState = Closed, outerGateState = Open, boxOccupied = true))
+        + (mode == Normal && boxOccupied && outerGateState == Open) ->
             BoxEmptied(tableID) .
             CloseOuterGate(tableID) .
             OpenInnerGate(tableID) .
-            DeliveryBox(tableID, Open, Closed, false)
-    ;
+            DeliveryBox(innerGateState = Open, outerGateState = Closed, boxOccupied = false)
+
+        + (mode == Normal) ->
+            ReceivesEmergency(TableStation(tableID)) .
+            DeliveryBox(mode = Emergency)
+
+        + (mode == Emergency && innerGateState == Open) ->
+            CloseInnerGate(tableID) .
+            DeliveryBox(innerGateState = Closed)
+
+        + (mode == Emergency && innerGateState == Closed && outerGateState == Closed) ->
+            OpenOuterGate(tableID) .
+            DeliveryBox(outerGateState = Open)
+
+        + (mode == Emergency && innerGateState == Closed && outerGateState == Open && boxOccupied) ->
+            BoxEmptied(tableID) .
+            DeliveryBox(boxOccupied = false)
+
+        + (mode == Emergency && innerGateState == Closed && outerGateState == Open) ->
+            ReceivesClearEmergency(TableStation(tableID)) .
+            (boxOccupied ->
+                DeliveryBox(mode = Normal)
+             <>
+                CloseOuterGate(tableID) .
+                OpenInnerGate(tableID) .
+                DeliveryBox(innerGateState = Open, outerGateState = Closed, mode = Normal));
 
 	KitchenLoader(
 		orders: OrderID -> OrderEntry,
@@ -175,7 +233,7 @@ proc
 		+
 		sum oid: OrderID, pid: PlateID .
 			(oid in unassigned && !posOneOccupied && pid < 2) ->
-			AddPlate(pid, t(orders(oid))) .
+			AddPlate(oid, t(orders(oid))) .
 			LoadPlate(pid) .
 			SendSkip(Kitchen) .
 			KitchenLoader(orders, unassigned - {oid}, posOneOccupied, true)
@@ -184,18 +242,26 @@ proc
 
     System =
         % Block unmatched sends/receives, only their communication may occur.
-        block({ConveyorMovedNewPosition, ReceivesConveyorPosition, SendOrder, ReceiveOrder},
+        block({ConveyorMovedNewPosition, ReceivesConveyorPosition, SendOrder, ReceiveOrder, IssueEmergency, ReceivesEmergency,
+        IssueClearEmergency, ReceivesClearEmergency},
             comm(
 				{
 					ConveyorMovedNewPosition | ReceivesConveyorPosition
 						-> ConveyorPosition,
+                    IssueEmergency | ReceivesEmergency
+                        -> EmergencyReceived,
+                    IssueClearEmergency | ReceivesClearEmergency
+                        -> EmergencyCleared,
 					SendOrder | ReceiveOrder
 						-> OrderToKitchen
 				},
                 OrderManager(
                     lambda id: OrderID . order(Doner, Table1, InPreparation),
                     {},
-                    0
+                    0,
+                    Normal,
+                    false,
+                    false
                 )
                 || ConveyorBelt
 				|| KitchenLoader(
@@ -204,8 +270,8 @@ proc
 					false,
 					false
 				)
-                || DeliveryBox(Table1, Open, Closed, false)
-                || DeliveryBox(Table2, Open, Closed, false)
+                || DeliveryBox(Table1, Open, Closed, false, Normal)
+                || DeliveryBox(Table2, Open, Closed, false, Normal)
             )
         );
 
