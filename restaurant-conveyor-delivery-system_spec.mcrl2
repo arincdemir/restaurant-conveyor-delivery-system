@@ -15,6 +15,7 @@ sort
         struct statusInfo(orderId: OrderID, status: OrderStatus);
     Plate = struct plate(p_id: PlateID, o_id: OrderID, t_id: TableID);
     BoxOccupied = Bool;
+	PosOneOccupied = Bool;
     Position = Nat;
     PlateSlot = struct Empty | Occupied(p: Plate);
     GateState = struct Closed | Open;
@@ -34,6 +35,7 @@ map
     statusesForTable:
         (OrderID -> OrderEntry) # FSet(OrderID) # TableID
         -> FSet(OrderStatusInfo);
+	%orders: OrderID -> OrderEntry;
 
 var
     pos: Position;
@@ -79,8 +81,9 @@ act
     ConveyorPosition: TableID # PlateSlot;
 
     % Internal actions
-    SendOrder: Meal # TableID;
-    ReceivesOrder: Meal # TableID;
+    SendOrder: OrderID # OrderEntry;
+    ReceiveOrder: OrderID # OrderEntry;
+	OrderToKitchen: OrderID # OrderEntry;
     CheckPosOne;
     ReportSkip;
     IssueEmergency, ReceivesEmergency, EmergencyReceived: StationID;
@@ -92,6 +95,7 @@ act
     SendSkip: StationID;
     ScanID: PlateID;
     ReceivesConveyorPosition: TableID # PlateSlot;
+
 
 % ==============================================================================
 % PROCESSES & INITIALISATION
@@ -108,6 +112,7 @@ proc
         % Accept at most two orders (IDs 0 and 1).
         (mode == Normal && nextID < 2) -> (sum meal: Meal, tbl: TableID .
             AcceptOrder(meal, tbl) .
+			SendOrder(nextID, order(meal, tbl, InPreparation)) . % Send order to KitchenLoader
             OrderManager(
                 orders[nextID -> order(meal, tbl, InPreparation)],
                 existing + {nextID},
@@ -206,14 +211,50 @@ proc
                 OpenInnerGate(tableID) .
                 DeliveryBox(innerGateState = Open, outerGateState = Closed, mode = Normal));
 
+	KitchenLoader(
+		orders: OrderID -> OrderEntry,
+		unassigned: FSet(OrderID),
+		posOneOccupied: PosOneOccupied,
+		skipped: Bool
+	) =
+		sum oid: OrderID, entry: OrderEntry .
+			(oid < 2) ->
+				ReceiveOrder(oid, entry) .
+				KitchenLoader(
+					orders[oid -> entry],
+					unassigned + {oid},
+					posOneOccupied,
+					skipped
+				)
+		+
+		(!skipped && (posOneOccupied || unassigned == {})) ->
+			SendSkip(Kitchen) .
+			KitchenLoader(orders, unassigned, posOneOccupied, true) 
+		+
+		sum oid: OrderID, pid: PlateID .
+			(oid in unassigned && !posOneOccupied && pid < 2) ->
+			AddPlate(oid, t(orders(oid))) .
+			LoadPlate(pid) .
+			SendSkip(Kitchen) .
+			KitchenLoader(orders, unassigned - {oid}, posOneOccupied, true)
+	;
+
 
     System =
-        block({ConveyorMovedNewPosition, ReceivesConveyorPosition,
-                 IssueEmergency, ReceivesEmergency,
-                 IssueClearEmergency, ReceivesClearEmergency},
-            comm({ConveyorMovedNewPosition | ReceivesConveyorPosition -> ConveyorPosition,
-                  IssueEmergency | ReceivesEmergency -> EmergencyReceived,
-                  IssueClearEmergency | ReceivesClearEmergency -> EmergencyCleared},
+        % Block unmatched sends/receives, only their communication may occur.
+        block({ConveyorMovedNewPosition, ReceivesConveyorPosition, SendOrder, ReceiveOrder, IssueEmergency, ReceivesEmergency,
+        IssueClearEmergency, ReceivesClearEmergency},
+            comm(
+				{
+					ConveyorMovedNewPosition | ReceivesConveyorPosition
+						-> ConveyorPosition,
+                    IssueEmergency | ReceivesEmergency
+                        -> EmergencyReceived,
+                    IssueClearEmergency | ReceivesClearEmergency
+                        -> EmergencyCleared,
+					SendOrder | ReceiveOrder
+						-> OrderToKitchen
+				},
                 OrderManager(
                     lambda id: OrderID . order(Doner, Table1, InPreparation),
                     {},
@@ -223,9 +264,16 @@ proc
                     false
                 )
                 || ConveyorBelt
+				|| KitchenLoader(
+					lambda oid: OrderID . order(Doner, Table1, InPreparation),
+					{},
+					false,
+					false
+				)
                 || DeliveryBox(Table1, Open, Closed, false, Normal)
                 || DeliveryBox(Table2, Open, Closed, false, Normal)
             )
         );
 
 init System;
+
