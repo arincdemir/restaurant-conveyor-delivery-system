@@ -70,6 +70,8 @@ act
     OperatorClearEmergency;
     EndEmergency;
     Advance: Position;
+	%New action
+	StartConveyor;
     StopConveyor;
     OpenInnerGate: TableID;
     OpenOuterGate: TableID;
@@ -154,10 +156,30 @@ proc
              IssueClearEmergency(TableStation(Table2))) .
             OrderManager(mode = Normal, emergencySent = false, operatorCleared = false);
 
-    % Minimal test belt: repeatedly present one fixed plate to Table1.
-    ConveyorBelt =
-        ConveyorMovedNewPosition(Table1, Occupied(plate(0, 0, Table1))) .
-        ConveyorBelt;
+	
+    ConveyorBelt(pos: Position, mode: SystemMode) =
+        % 1. Valid position check, request permission, advance, and send the plate slot content to the target table
+        (mode == Normal && valid_position(pos)) ->
+            RequestPermission .
+            Advance(pos) .
+            (sum tbl: TableID . 
+                ConveyorMovedNewPosition(tbl, belt(pos)) . 
+                ConveyorBelt(if(pos == 9, 0, pos + 1), mode))
+
+      % 2.Receive emergency 
+      + (mode == Normal) ->
+            (sum st: StationID . 
+                ReceivesEmergency(st) . 
+                StopConveyor . 
+                ConveyorBelt(pos, Emergency))
+
+      % 3.Receive clear emergency
+      + (mode == Emergency) ->
+            (sum st: StationID . 
+                ReceivesClearEmergency(st) . 
+                StartConveyor . 
+                ConveyorBelt(pos, Normal));
+       
 
     DeliveryBox(
         tableID: TableID,
@@ -263,7 +285,7 @@ proc
                     false,
                     false
                 )
-                || ConveyorBelt
+                || ConveyorBelt(0, Normal)
 				|| KitchenLoader(
 					lambda oid: OrderID . order(Doner, Table1, InPreparation),
 					{},
