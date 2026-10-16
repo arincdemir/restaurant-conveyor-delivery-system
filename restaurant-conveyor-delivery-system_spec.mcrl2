@@ -27,6 +27,7 @@ sort
 % MAPS & EQUATIONS
 % ==============================================================================
 map
+    maxOrders: Nat;
     valid_position: Nat -> Bool;
     setSlot: List(PlateSlot) # Position # PlateSlot -> List(PlateSlot);
     boxes: TableID -> PlateSlot;
@@ -46,7 +47,8 @@ var
     firstSlot, newSlot: PlateSlot;
 
 eqn
-    valid_position(pos) = (pos <= 9);
+    maxOrders = 3;
+    valid_position(pos) = (pos <= 5);
 
     % Change one slot without changing the rest of the belt.
     setSlot([], pos, newSlot) = [];
@@ -125,8 +127,8 @@ proc
         operatorCleared: Bool,
         pending: FSet(OrderID)
     ) =
-        % Accept at most two orders (IDs 0 and 1).
-        (mode == Normal && nextID < 2) -> (sum meal: Meal, tbl: TableID .
+        % Accept at most maxOrders orders (IDs 0 to maxOrders - 1).
+        (mode == Normal && nextID < maxOrders) -> (sum meal: Meal, tbl: TableID .
             AcceptOrder(meal, tbl) .
             OrderManager(
                 orders[nextID -> order(meal, tbl, InPreparation)],
@@ -140,7 +142,8 @@ proc
 
       % Dispatch separately so acceptance does not wait for a busy kitchen.
       + sum oid: OrderID .
-            (oid < 2 && oid in pending && (oid == 0 || !(0 in pending))) ->
+            (oid < maxOrders && oid in pending &&
+             !(exists earlier: OrderID . earlier < oid && earlier in pending)) ->
                 SendOrder(oid, orders(oid)) .
                 OrderManager(pending = pending - {oid})
 
@@ -187,37 +190,39 @@ proc
         pos: Position, mode: SystemMode, belt: List(PlateSlot),
         pending: FSet(StationID), servicing: Bool
     ) =
+        % Six-slot belt: kitchen at 0, tables at 2 and 4.
         % Give all stations their current slot while the belt is stopped.
-        (mode == Normal && valid_position(pos) && !servicing) ->
+        % pos starts at 0 and wraps at 5, so its range is preserved.
+        (mode == Normal && !servicing) ->
             (RequestPermission | RequestRound |
              SendLoadingPosition(belt . 0) |
-             ConveyorMovedNewPosition(Table1, belt . 3) |
-             ConveyorMovedNewPosition(Table2, belt . 7)) .
+             ConveyorMovedNewPosition(Table1, belt . 2) |
+             ConveyorMovedNewPosition(Table2, belt . 4)) .
             ConveyorBelt(pending = {Kitchen, TableStation(Table1), TableStation(Table2)},
                          servicing = true)
 
       % Load into slot 0. Belt updates are handled one at a time.
       + sum pid: PlateID, tbl: TableID .
             (mode == Normal && servicing && Kitchen in pending &&
-             belt . 0 == Empty && pid < 2) ->
+             belt . 0 == Empty && pid < maxOrders) ->
                 ReceivesLoadingPlate(plate(pid, pid, tbl)) .
                 ConveyorBelt(belt = setSlot(belt, 0, Occupied(plate(pid, pid, tbl))))
 
       % A push removes exactly the matching plate at that table's location.
       + sum pid: PlateID, tbl: TableID .
             (mode == Normal && servicing && TableStation(tbl) in pending &&
-             pid < 2 && belt . if(tbl == Table1, 3, 7) == Occupied(plate(pid, pid, tbl))) ->
+             pid < maxOrders && belt . if(tbl == Table1, 2, 4) == Occupied(plate(pid, pid, tbl))) ->
                 ReceivesTransfer(tbl, plate(pid, pid, tbl)) .
-                ConveyorBelt(belt = setSlot(belt, if(tbl == Table1, 3, 7), Empty))
+                ConveyorBelt(belt = setSlot(belt, if(tbl == Table1, 2, 4), Empty))
 
       + sum st: StationID .
             (mode == Normal && servicing && st in pending) ->
                 ReceivesStationDone(st) . ConveyorBelt(pending = pending - {st})
 
-      % All stations are done; rotate slot 9 to 0 and the other slots forward.
+      % All stations are done; rotate slot 5 to 0 and the other slots forward.
       + (mode == Normal && servicing && pending == {}) ->
             StartConveyor . Advance(pos) . StopConveyor .
-            ConveyorBelt(pos = if(pos == 9, 0, pos + 1),
+            ConveyorBelt(pos = if(pos == 5, 0, pos + 1),
                          belt = rhead(belt) |> rtail(belt), servicing = false)
 
       + (mode == Normal && (!servicing || pending == {})) ->
@@ -298,7 +303,7 @@ proc
         mode: SystemMode
 	) =
 		sum oid: OrderID, entry: OrderEntry .
-			(oid < 2) ->
+                (oid < maxOrders) ->
 				ReceiveOrder(oid, entry) .
 				KitchenLoader(
 					orders[oid -> entry],
@@ -318,7 +323,7 @@ proc
 		+
 		sum oid: OrderID, pid: PlateID .
 			(mode == Normal && oid in unassigned && !posOneOccupied &&
-             !skipped && pid < 2 && pid == oid) ->
+             !skipped && pid < maxOrders && pid == oid) ->
 			AddPlate(oid, t(orders(oid))) .
 			(LoadPlate(pid) | OffersLoadingPlate(plate(pid, oid, t(orders(oid))))) .
             SendStationDone(Kitchen) .
@@ -362,7 +367,7 @@ proc
                     {}
                 )
                 || ConveyorBelt(0, Normal,
-                    [Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty],
+                    [Empty, Empty, Empty, Empty, Empty, Empty],
                     {}, false)
 				|| KitchenLoader(
 					lambda oid: OrderID . order(Doner, Table1, InPreparation),
@@ -376,5 +381,21 @@ proc
             )
         );
 
-init System;
+% Interleave independent actions, retaining the required synchronized actions.
+% The controllers still run in parallel and may act in either order.
+init allow({
+    AcceptOrder, DisplayStatus, CalculateBill, AddPlate, StopLoading,
+    StartEmergency, OperatorClearEmergency,
+    StartConveyor, Advance, StopConveyor,
+    OpenInnerGate, CloseInnerGate, OpenOuterGate, CloseOuterGate,
+    Retract, OrderToKitchen, CheckPosOne, BoxEmptied, SendSkip, StationDone,
+    LoadPlate | PlateLoaded,
+    Push | BoxFilled | PlateTransferred,
+    RequestPermission | RoundPermitted | LoadingPosition |
+        ConveyorPosition | ConveyorPosition,
+    EmergencyReceived | EmergencyReceived |
+        EmergencyReceived | EmergencyReceived,
+    EndEmergency | EmergencyCleared | EmergencyCleared |
+        EmergencyCleared | EmergencyCleared
+}, System);
 
