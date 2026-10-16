@@ -27,7 +27,7 @@ sort
 % MAPS & EQUATIONS
 % ==============================================================================
 map
-    maxOrders: Nat;
+    maxOrders, maxOutstanding: Nat;
     valid_position: Nat -> Bool;
     setSlot: List(PlateSlot) # Position # PlateSlot -> List(PlateSlot);
     boxes: TableID -> PlateSlot;
@@ -47,7 +47,9 @@ var
     firstSlot, newSlot: PlateSlot;
 
 eqn
+    % Total accepted in a run, and the maximum still awaiting collection.
     maxOrders = 3;
+    maxOutstanding = 2;
     valid_position(pos) = (pos <= 5);
 
     % Change one slot without changing the rest of the belt.
@@ -112,6 +114,7 @@ act
     OffersLoadingPlate, ReceivesLoadingPlate, PlateLoaded: Plate;
     OffersTransfer, ReceivesTransfer, PlateTransferred: TableID # Plate;
     SendStationDone, ReceivesStationDone, StationDone: StationID;
+    SendCollected, ReceivesCollected, OrderCollected: OrderID;
 
 
 % ==============================================================================
@@ -125,10 +128,11 @@ proc
         mode: SystemMode,
         emergencySent: Bool,
         operatorCleared: Bool,
-        pending: FSet(OrderID)
+        pending: FSet(OrderID),
+        outstanding: FSet(OrderID)
     ) =
         % Accept at most maxOrders orders (IDs 0 to maxOrders - 1).
-        (mode == Normal && nextID < maxOrders) -> (sum meal: Meal, tbl: TableID .
+        (mode == Normal && nextID < maxOrders && #outstanding < maxOutstanding) -> (sum meal: Meal, tbl: TableID .
             AcceptOrder(meal, tbl) .
             OrderManager(
                 orders[nextID -> order(meal, tbl, InPreparation)],
@@ -137,7 +141,8 @@ proc
                 mode,
                 emergencySent,
                 operatorCleared,
-                pending + {nextID}
+                pending + {nextID},
+                outstanding + {nextID}
             ))
 
       % Dispatch separately so acceptance does not wait for a busy kitchen.
@@ -146,6 +151,12 @@ proc
              !(exists earlier: OrderID . earlier < oid && earlier in pending)) ->
                 SendOrder(oid, orders(oid)) .
                 OrderManager(pending = pending - {oid})
+
+      % Collection frees admission capacity in either system mode.
+      + sum oid: OrderID .
+            (oid < maxOrders && oid in outstanding) ->
+                ReceivesCollected(oid) .
+                OrderManager(outstanding = outstanding - {oid})
 
       + (mode == Normal) -> PermitRound . OrderManager()
 
@@ -238,7 +249,8 @@ proc
         outerGateState: GateState,
         boxOccupied: BoxOccupied,
         mode: SystemMode,
-        boxPlate: Plate
+        % Collection feedback needs only the occupied order ID.
+        boxOrder: OrderID
     ) =
         (mode == Normal) -> (sum inSlot: PlateSlot .
             ReceivesConveyorPosition(tableID, inSlot) .
@@ -259,9 +271,9 @@ proc
              <>
                 DeliverPlate(tableID, p(inSlot))))
         + (mode == Normal && boxOccupied && outerGateState == Open) ->
-            BoxEmptied(tableID) .
+            (BoxEmptied(tableID) | SendCollected(boxOrder)) .
             CloseOuterGate(tableID) .
-            DeliveryBox(innerGateState = Closed, outerGateState = Closed, boxOccupied = false)
+            DeliveryBox(innerGateState = Closed, outerGateState = Closed, boxOccupied = false, boxOrder = 0)
 
         + (mode == Normal) ->
             ReceivesEmergency(TableStation(tableID)) .
@@ -276,8 +288,8 @@ proc
             DeliveryBox(outerGateState = Open)
 
         + (mode == Emergency && innerGateState == Closed && outerGateState == Open && boxOccupied) ->
-            BoxEmptied(tableID) .
-            DeliveryBox(boxOccupied = false)
+            (BoxEmptied(tableID) | SendCollected(boxOrder)) .
+            DeliveryBox(boxOccupied = false, boxOrder = 0)
 
         + (mode == Emergency && innerGateState == Closed && outerGateState == Open) ->
             ReceivesClearEmergency(TableStation(tableID)) .
@@ -293,7 +305,7 @@ proc
         (Push(tableID) | BoxFilled(tableID) | OffersTransfer(tableID, incoming)) .
         Retract(tableID) . CloseInnerGate(tableID) . OpenOuterGate(tableID) .
         SendStationDone(TableStation(tableID)) .
-        DeliveryBox(tableID, Closed, Open, true, Normal, incoming);
+        DeliveryBox(tableID, Closed, Open, true, Normal, o_id(incoming));
 
 	KitchenLoader(
 		orders: OrderID -> OrderEntry,
@@ -319,15 +331,20 @@ proc
         +
 		(mode == Normal && !skipped && (posOneOccupied || unassigned == {})) ->
 			SendSkip(Kitchen) . SendStationDone(Kitchen) .
-			KitchenLoader(skipped = true)
+			KitchenLoader(posOneOccupied = false, skipped = true)
 		+
-		sum oid: OrderID, pid: PlateID .
-			(mode == Normal && oid in unassigned && !posOneOccupied &&
-             !skipped && pid < maxOrders && pid == oid) ->
+        % FIFO loading: choose the oldest queued order.
+		sum oid: OrderID .
+			(mode == Normal && oid in unassigned &&
+             !(exists earlier: OrderID . earlier < oid && earlier in unassigned) &&
+             !posOneOccupied &&
+             !skipped && oid < maxOrders) ->
 			AddPlate(oid, t(orders(oid))) .
-			(LoadPlate(pid) | OffersLoadingPlate(plate(pid, oid, t(orders(oid))))) .
+			(LoadPlate(oid) | OffersLoadingPlate(plate(oid, oid, t(orders(oid))))) .
             SendStationDone(Kitchen) .
-			KitchenLoader(orders, unassigned - {oid}, posOneOccupied, true, mode)
+            % The manager keeps history; discard the kitchen copy after loading.
+			KitchenLoader(orders[oid -> order(Doner, Table1, InPreparation)],
+                          unassigned - {oid}, false, true, mode)
         + (mode == Normal && skipped) ->
             ReceivesEmergency(Kitchen) . StopLoading . KitchenLoader(mode = Emergency)
         + (mode == Emergency) ->
@@ -340,7 +357,7 @@ proc
         IssueClearEmergency, ReceivesClearEmergency,
         RequestRound, PermitRound, SendLoadingPosition, ReceivesLoadingPosition,
         OffersLoadingPlate, ReceivesLoadingPlate, OffersTransfer, ReceivesTransfer,
-        SendStationDone, ReceivesStationDone},
+        SendStationDone, ReceivesStationDone, SendCollected, ReceivesCollected},
             comm(
 				{
 					ConveyorMovedNewPosition | ReceivesConveyorPosition
@@ -354,6 +371,7 @@ proc
                     OffersLoadingPlate | ReceivesLoadingPlate -> PlateLoaded,
                     OffersTransfer | ReceivesTransfer -> PlateTransferred,
                     SendStationDone | ReceivesStationDone -> StationDone,
+                    SendCollected | ReceivesCollected -> OrderCollected,
 					SendOrder | ReceiveOrder
 						-> OrderToKitchen
 				},
@@ -364,6 +382,7 @@ proc
                     Normal,
                     false,
                     false,
+                    {},
                     {}
                 )
                 || ConveyorBelt(0, Normal,
@@ -376,8 +395,8 @@ proc
 					true,
                     Normal
 				)
-                || DeliveryBox(Table1, Open, Closed, false, Normal, plate(0, 0, Table1))
-                || DeliveryBox(Table2, Open, Closed, false, Normal, plate(0, 0, Table2))
+                || DeliveryBox(Table1, Open, Closed, false, Normal, 0)
+                || DeliveryBox(Table2, Open, Closed, false, Normal, 0)
             )
         );
 
@@ -388,7 +407,8 @@ init allow({
     StartEmergency, OperatorClearEmergency,
     StartConveyor, Advance, StopConveyor,
     OpenInnerGate, CloseInnerGate, OpenOuterGate, CloseOuterGate,
-    Retract, OrderToKitchen, CheckPosOne, BoxEmptied, SendSkip, StationDone,
+    Retract, OrderToKitchen, CheckPosOne, SendSkip, StationDone,
+    BoxEmptied | OrderCollected,
     LoadPlate | PlateLoaded,
     Push | BoxFilled | PlateTransferred,
     RequestPermission | RoundPermitted | LoadingPosition |
