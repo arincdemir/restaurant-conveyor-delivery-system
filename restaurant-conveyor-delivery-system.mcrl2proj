@@ -6,5 +6,5 @@
  </properties>
  <jittyc>true</jittyc>
  <linearisation_method>regular</linearisation_method>
- <enumeration_limit>0</enumeration_limit>
+ <enumeration_limit>10</enumeration_limit>
 </root>
