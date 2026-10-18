@@ -1,0 +1,21 @@
+% F2: a matching plate at an available destination can transfer before movement.
+% Availability means empty box and closed outer gate.
+% This is a possible service path, not delivery under every scheduling choice.
+forall tbl: TableID .
+nu Box(full: Bool = false, outerOpen: Bool = false) .
+(
+    [(exists pl: Plate . (Push(tbl) | BoxFilled(tbl) | PlateTransferred(tbl, pl)))] Box(true, outerOpen)
+    && [BoxEmptied(tbl)] Box(false, outerOpen)
+    && [OpenOuterGate(tbl)] Box(full, true)
+    && [CloseOuterGate(tbl)] Box(full, false)
+    && [!((exists pl: Plate . (Push(tbl) | BoxFilled(tbl) | PlateTransferred(tbl, pl))) || BoxEmptied(tbl) ||
+        OpenOuterGate(tbl) || CloseOuterGate(tbl))]
+        Box(full, outerOpen)
+    && forall oid: OrderID, k, other: PlateSlot . (val(oid < maxOrders) =>
+        [(RequestPermission | RoundPermitted | LoadingPosition(k) |
+         ConveyorPosition(Table1, if(tbl == Table1, Occupied(plate(oid, tbl)), other)) | ConveyorPosition(Table2,
+             if(tbl == Table2, Occupied(plate(oid, tbl)), other)))]
+        (val(!full && !outerOpen) =>
+            <(!(exists pos: Position . Advance(pos)))* . (Push(tbl) | BoxFilled(tbl) | PlateTransferred(tbl,
+                plate(oid, tbl)))> true))
+)

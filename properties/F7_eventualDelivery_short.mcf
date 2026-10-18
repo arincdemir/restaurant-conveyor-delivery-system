@@ -1,0 +1,23 @@
+% Same F7 on this model: initially-ready loading, loading after a ready reset,
+% or readiness after loading. CloseOuterGate occurs only with an empty box;
+% BoxEmptied occurs with the outer gate open. These facts remove state tracking.
+% mu X.nu Y below means infinite advancement cannot avoid this plate's delivery.
+forall tbl: TableID, oid: OrderID . (val(oid < maxOrders) =>
+[
+    (!(OpenOuterGate(tbl) || (exists pl: Plate .
+        (Push(tbl) | BoxFilled(tbl) | PlateTransferred(tbl, pl)))))* .
+        (LoadPlate(oid) | PlateLoaded(plate(oid, tbl)))
+    + true* . CloseOuterGate(tbl) .
+        (!(OpenOuterGate(tbl) || (exists pl: Plate .
+            (Push(tbl) | BoxFilled(tbl) | PlateTransferred(tbl, pl)))))* .
+        (LoadPlate(oid) | PlateLoaded(plate(oid, tbl)))
+    + true* . (LoadPlate(oid) | PlateLoaded(plate(oid, tbl))) .
+        (!(Push(tbl) | BoxFilled(tbl) | PlateTransferred(tbl, plate(oid, tbl))))* .
+        CloseOuterGate(tbl)
+]
+mu X . nu Y .
+(
+    [(exists pos: Position . Advance(pos))] X
+    && [!((exists pos: Position . Advance(pos)) ||
+          (Push(tbl) | BoxFilled(tbl) | PlateTransferred(tbl, plate(oid, tbl))))] Y
+))

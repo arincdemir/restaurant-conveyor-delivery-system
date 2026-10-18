@@ -1,0 +1,4 @@
+% Same guarantee; compact form.
+forall tbl: TableID .
+[true* . (exists pl: Plate . (Push(tbl) | BoxFilled(tbl) | PlateTransferred(tbl, pl))) . (!CloseInnerGate(tbl))* .
+    OpenOuterGate(tbl)] false

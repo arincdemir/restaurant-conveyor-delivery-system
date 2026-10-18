@@ -1,0 +1,43 @@
+% S12: an emergency stays latched until operator clearance and a synchronized
+% reset. Admission, servicing rounds and unsafe operations cannot resume early.
+% Safe finishing work, collection and order dispatch remain permitted.
+nu Latch(emergency: Bool = false, notified: Bool = false, cleared: Bool = false) .
+(
+    [StartEmergency] Latch(true, false, false)
+    && [(EmergencyReceived(ConveyorStation) |
+         EmergencyReceived(Kitchen) |
+         EmergencyReceived(TableStation(Table1)) |
+         EmergencyReceived(TableStation(Table2)))]
+        (val(emergency) && Latch(emergency, true, cleared))
+    && [OperatorClearEmergency]
+        (val(emergency && notified) && Latch(emergency, notified, true))
+    && [(EndEmergency |
+         EmergencyCleared(ConveyorStation) |
+         EmergencyCleared(Kitchen) |
+         EmergencyCleared(TableStation(Table1)) |
+         EmergencyCleared(TableStation(Table2)))]
+        (val(emergency && notified && cleared) && Latch(false, false, false))
+    && [(exists meal: Meal, tbl: TableID . AcceptOrder(meal, tbl)) ||
+        StartConveyor ||
+        (exists pos: Position . Advance(pos)) ||
+        (exists oid: OrderID, incoming: Plate .
+            (LoadPlate(oid) | PlateLoaded(incoming))) ||
+        (exists tbl: TableID, incoming: Plate .
+            (Push(tbl) | BoxFilled(tbl) | PlateTransferred(tbl, incoming))) ||
+        (exists tbl: TableID . OpenInnerGate(tbl)) ||
+        (exists loading, first, second: PlateSlot .
+            (RequestPermission | RoundPermitted | LoadingPosition(loading) |
+             ConveyorPosition(Table1, first) | ConveyorPosition(Table2, second)))]
+        val(!emergency)
+    && [!(StartEmergency || OperatorClearEmergency ||
+          (EmergencyReceived(ConveyorStation) |
+           EmergencyReceived(Kitchen) |
+           EmergencyReceived(TableStation(Table1)) |
+           EmergencyReceived(TableStation(Table2))) ||
+          (EndEmergency |
+           EmergencyCleared(ConveyorStation) |
+           EmergencyCleared(Kitchen) |
+           EmergencyCleared(TableStation(Table1)) |
+           EmergencyCleared(TableStation(Table2))))]
+        Latch(emergency, notified, cleared)
+)

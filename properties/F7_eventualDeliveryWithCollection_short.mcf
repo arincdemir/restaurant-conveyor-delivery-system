@@ -1,0 +1,23 @@
+% Finite-model version of F7 with collection: each available opportunity must
+% eventually serve some plate if advancement continues. Only finitely many other
+% plates can consume those opportunities, and collection supplies new ones.
+% Requires finite non-repeating transfers and the readiness facts used by short F7.
+forall tbl: TableID, oid: OrderID . (val(oid < maxOrders) =>
+[
+    (!(OpenOuterGate(tbl) || (exists pl: Plate .
+        (Push(tbl) | BoxFilled(tbl) | PlateTransferred(tbl, pl)))))* .
+        (LoadPlate(oid) | PlateLoaded(plate(oid, tbl)))
+    + true* . CloseOuterGate(tbl) .
+        (!(OpenOuterGate(tbl) || (exists pl: Plate .
+            (Push(tbl) | BoxFilled(tbl) | PlateTransferred(tbl, pl)))))* .
+        (LoadPlate(oid) | PlateLoaded(plate(oid, tbl)))
+    + true* . (LoadPlate(oid) | PlateLoaded(plate(oid, tbl))) .
+        (!(Push(tbl) | BoxFilled(tbl) | PlateTransferred(tbl, plate(oid, tbl))))* .
+        CloseOuterGate(tbl)
+]
+mu X . nu Y .
+(
+    [(exists pos: Position . Advance(pos))] X
+    && [!((exists pos: Position . Advance(pos)) || (exists pl: Plate .
+          (Push(tbl) | BoxFilled(tbl) | PlateTransferred(tbl, pl))))] Y
+))

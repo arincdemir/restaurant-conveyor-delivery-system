@@ -2,7 +2,50 @@
  <spec>restaurant-conveyor-delivery-system_spec.mcrl2</spec>
  <properties>
   <property>exampleProperty</property>
+  <property>S10_noUnsafeActionsDuringEmergency</property>
+  <property>S11_emergencyGateInterlock</property>
+  <property>S12_noAutomaticResume</property>
+  <property>F7_eventualDelivery</property>
+  <property>F7_eventualDeliveryWithCollection</property>
   <property>F9_resumeAfterReset</property>
+  <property>S10_noUnsafeActionsDuringEmergency_short</property>
+  <property>S11_emergencyGateInterlock_short</property>
+  <property>S12_noAutomaticResume_short</property>
+  <property>F7_eventualDelivery_short</property>
+  <property>F7_eventualDeliveryWithCollection_short</property>
+  <property>F9_resumeAfterReset_short</property>
+  <property>S1_gateInterlock</property>
+  <property>S1_gateInterlock_short</property>
+  <property>S2_correctDestination</property>
+  <property>S2_correctDestination_short</property>
+  <property>S3_noTransferIntoOccupiedBox</property>
+  <property>S3_noTransferIntoOccupiedBox_short</property>
+  <property>S4_safePusherOperation</property>
+  <property>S4_safePusherOperation_short</property>
+  <property>S5_safeConveyorAdvance</property>
+  <property>S5_safeConveyorAdvance_short</property>
+  <property>S6_noOccupiedSlotOverwrite</property>
+  <property>S6_noOccupiedSlotOverwrite_short</property>
+  <property>S7_atMostOnceDelivery</property>
+  <property>S7_atMostOnceDelivery_short</property>
+  <property>S8_oneReportPerRound</property>
+  <property>S8_oneReportPerRound_short</property>
+  <property>S9_roundAndMechanicalBarrier</property>
+  <property>S9_roundAndMechanicalBarrier_short</property>
+  <property>F1_acceptedOrderCanLoad</property>
+  <property>F1_acceptedOrderCanLoad_short</property>
+  <property>F2_alignedPlateCanDeliver</property>
+  <property>F2_alignedPlateCanDeliver_short</property>
+  <property>F3_occupiedBoxSkipsAndCanAdvance</property>
+  <property>F3_occupiedBoxSkipsAndCanAdvance_short</property>
+  <property>F4_simultaneousTableTransfers</property>
+  <property>F4_simultaneousTableTransfers_short</property>
+  <property>F5_innerClosesBeforeOuterOpens</property>
+  <property>F5_innerClosesBeforeOuterOpens_short</property>
+  <property>F6_collectionClosesOuterGate</property>
+  <property>F6_collectionClosesOuterGate_short</property>
+  <property>F8_deadlockFree</property>
+  <property>F8_deadlockFree_short</property>
  </properties>
  <jittyc>true</jittyc>
  <linearisation_method>regular</linearisation_method>

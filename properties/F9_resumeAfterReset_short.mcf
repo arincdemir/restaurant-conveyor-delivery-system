@@ -1,0 +1,4 @@
+% Same F9; only the layout is shorter.
+[true* . (EndEmergency | EmergencyCleared(ConveyorStation) | EmergencyCleared(Kitchen) |
+    EmergencyCleared(TableStation(Table1)) | EmergencyCleared(TableStation(Table2)))]
+<true* . (exists pos: Position . Advance(pos))> true

@@ -49,7 +49,6 @@ act
     PermitLoadPlate: OrderID; % Authorize loading only in normal mode.
     PermitOpenInnerGate: TableID; % Authorize inner-gate opening only in normal mode.
     PermitPush: TableID; % Authorize pushing only in normal mode.
-    PermitPause: StationID; % Let an interrupted station safely skip its work.
     StartEmergency; % Record an emergency request and pause order acceptance.
     IssueEmergency: StationID; % Notify an addressed controller of the emergency.
     OperatorClearEmergency; % Record operator clearance after notification.
@@ -92,7 +91,6 @@ act
     % Shared coordination
     SendSkip: StationID; % Report that a station skips its current round.
     SendStationDone: StationID; % Report that a station has finished the round.
-    RequestPause: StationID; % Request cancellation after an emergency starts.
     ReceivesEmergency: StationID; % Receive notification at the controller's address.
     ReceivesClearEmergency: StationID; % Accept reset after controller recovery.
 
@@ -104,7 +102,6 @@ act
     LoadPlate: OrderID; % Synchronized permission to load an order's plate.
     OpenInnerGate: TableID; % Synchronized permission to open the inner gate.
     Push: TableID; % Synchronized permission to push into the delivery box.
-    EmergencyPaused: StationID; % Synchronized cancellation of unfinished work.
     LoadingPosition: PlateSlot; % Synchronized loading-slot snapshot delivery.
     ConveyorPosition: TableID # PlateSlot; % Synchronized table-slot snapshot delivery.
     PlateLoaded: Plate; % Synchronized loading and insertion into the belt.
@@ -170,12 +167,7 @@ proc
             StartEmergency .
             OrderManager(mode = Emergency, emergencySent = false, operatorCleared = false)
 
-        % Interrupted stations finish their round with a safe skip.
-        + sum st: StationID .
-            (mode == Emergency && !emergencySent && st != ConveyorStation) ->
-                PermitPause(st) . OrderManager()
-
-        % Broadcast once safe action tails and cancellation reports finish.
+        % Broadcast at emergency receivers after any started safe sequences finish.
         + (mode == Emergency && !emergencySent) ->
             (IssueEmergency(ConveyorStation) |
              IssueEmergency(Kitchen) |
@@ -239,7 +231,8 @@ proc
         + (mode == Normal && servicing && pending == {}) ->
             RequestStartConveyor . ConveyorAdvance(pos, belt)
 
-        + (mode == Normal && (!servicing || pending == {})) ->
+        % Emergency notification cancels the round and its outstanding reports.
+        + (mode == Normal) ->
             ReceivesEmergency(ConveyorStation) . StopConveyor .
             ConveyorBelt(mode = Emergency, pending = {}, servicing = false)
 
@@ -313,19 +306,18 @@ proc
              <>
                 CloseOuterGate(tableID) . RestoreEmptyBox(tableID));
 
-    % Cancel before opening; the matching plate remains on the belt for retry.
+    % Receive the emergency before opening; leave the plate on the belt for retry.
     PrepareDelivery(tableID: TableID, incoming: Plate) =
         RequestOpenInnerGate(tableID) . DeliverPlate(tableID, incoming)
-        + RequestPause(TableStation(tableID)) .
-            SendSkip(TableStation(tableID)) . SendStationDone(TableStation(tableID)) .
-            DeliveryBox(tableID, Closed, Closed, false, Normal);
+        + ReceivesEmergency(TableStation(tableID)) .
+            DeliveryBox(tableID, Closed, Closed, false, Emergency);
 
     % A new emergency may also interrupt the empty-box reset sequence.
     RestoreEmptyBox(tableID: TableID) =
         RequestOpenInnerGate(tableID) .
         DeliveryBox(tableID, Open, Closed, false, Normal)
-        + RequestPause(TableStation(tableID)) .
-            DeliveryBox(tableID, Closed, Closed, false, Normal);
+        + ReceivesEmergency(TableStation(tableID)) .
+            DeliveryBox(tableID, Closed, Closed, false, Emergency);
 
     % Keep the incoming plate until the atomic transfer removes it from the belt.
     DeliverPlate(tableID: TableID, incoming: Plate) =
@@ -333,9 +325,8 @@ proc
         Retract(tableID) . CloseInnerGate(tableID) . OpenOuterGate(tableID) .
         SendStationDone(TableStation(tableID)) .
         DeliveryBox(tableID, Closed, Open, true, Normal)
-        + RequestPause(TableStation(tableID)) . CloseInnerGate(tableID) .
-            SendSkip(TableStation(tableID)) . SendStationDone(TableStation(tableID)) .
-            DeliveryBox(tableID, Closed, Closed, false, Normal);
+        + ReceivesEmergency(TableStation(tableID)) .
+            DeliveryBox(tableID, Open, Closed, false, Emergency);
 
     KitchenLoader(
         orders: OrderID -> OrderEntry,
@@ -378,13 +369,10 @@ proc
             SendStationDone(Kitchen) .
             KitchenLoader(unassigned = unassigned - {o_id(p(prepared))}, skipped = true, prepared = Empty)
 
-        + (mode == Normal && !skipped && !posOneOccupied && unassigned != {}) ->
-            RequestPause(Kitchen) . SendSkip(Kitchen) . SendStationDone(Kitchen) .
-            KitchenLoader(skipped = true)
-
-        + (mode == Normal && skipped) ->
+        % Cancel this round while retaining queued orders and any prepared plate.
+        + (mode == Normal) ->
             ReceivesEmergency(Kitchen) . StopLoading .
-            KitchenLoader(mode = Emergency)
+            KitchenLoader(mode = Emergency, skipped = true)
 
         + (mode == Emergency) ->
             ReceivesClearEmergency(Kitchen) .
@@ -403,7 +391,6 @@ proc
              RequestLoadPlate, PermitLoadPlate,
              RequestOpenInnerGate, PermitOpenInnerGate,
              RequestPush, PermitPush,
-             RequestPause, PermitPause,
              SendLoadingPosition, ReceivesLoadingPosition,
              OffersLoadingPlate, ReceivesLoadingPlate,
              OffersTransfer, ReceivesTransfer,
@@ -419,7 +406,6 @@ proc
                     RequestLoadPlate | PermitLoadPlate -> LoadPlate,
                     RequestOpenInnerGate | PermitOpenInnerGate -> OpenInnerGate,
                     RequestPush | PermitPush -> Push,
-                    RequestPause | PermitPause -> EmergencyPaused,
                     SendLoadingPosition | ReceivesLoadingPosition -> LoadingPosition,
                     OffersLoadingPlate | ReceivesLoadingPlate -> PlateLoaded,
                     OffersTransfer | ReceivesTransfer -> PlateTransferred,
@@ -462,7 +448,7 @@ init allow(
         StartEmergency, OperatorClearEmergency,
         StartConveyor, Advance, StopConveyor,
         OpenInnerGate, CloseInnerGate, OpenOuterGate, CloseOuterGate,
-        Retract, OrderToKitchen, CheckPosOne, BoxEmptied, SendSkip, StationDone, EmergencyPaused,
+        Retract, OrderToKitchen, CheckPosOne, BoxEmptied, SendSkip, StationDone,
         LoadPlate | PlateLoaded,
         Push | BoxFilled | PlateTransferred,
         RequestPermission | RoundPermitted | LoadingPosition |

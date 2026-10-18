@@ -1,0 +1,28 @@
+% Same guarantee; compact form.
+forall tbl: TableID . nu Pusher(stopped: Bool = true, innerOpen: Bool = true, outerOpen: Bool = false,
+          extended: Bool = false, aligned: PlateSlot = Empty) .
+( [StartConveyor] (val(!extended) && Pusher(false, innerOpen, outerOpen, extended, aligned))
+    && [StopConveyor] Pusher(true, innerOpen, outerOpen, extended, aligned)
+    && [(exists pos: Position . Advance(pos))] (val(!extended) && Pusher(stopped, innerOpen, outerOpen, extended,
+        Empty))
+    && [OpenInnerGate(tbl)] Pusher(stopped, true, outerOpen, extended, aligned)
+    && [CloseInnerGate(tbl)]
+        (val(!extended) && Pusher(stopped, false, outerOpen, extended, aligned))
+    && [OpenOuterGate(tbl)]
+        (val(!extended) && Pusher(stopped, innerOpen, true, extended, aligned))
+    && [CloseOuterGate(tbl)] Pusher(stopped, innerOpen, false, extended, aligned)
+    && [Retract(tbl)] Pusher(stopped, innerOpen, outerOpen, false, aligned)
+    && forall k, a, b: PlateSlot . [(RequestPermission | RoundPermitted | LoadingPosition(k) |
+         ConveyorPosition(Table1, a) | ConveyorPosition(Table2, b))]
+        Pusher(stopped, innerOpen, outerOpen, extended, if(tbl == Table1, a, b))
+    && forall pl: Plate . [(Push(tbl) | BoxFilled(tbl) | PlateTransferred(tbl, pl))]
+        (val(stopped && innerOpen && !outerOpen && !extended && aligned == Occupied(pl) && t_id(pl) == tbl)
+         && Pusher(stopped, innerOpen, outerOpen, true, Empty))
+    && [!(StartConveyor || StopConveyor || (exists pos: Position . Advance(pos)) || OpenInnerGate(tbl) ||
+        CloseInnerGate(tbl) ||
+          OpenOuterGate(tbl) || CloseOuterGate(tbl) || Retract(tbl) || (exists pl: Plate . (Push(tbl) |
+              BoxFilled(tbl) | PlateTransferred(tbl, pl))) || (exists k, a, b: PlateSlot . (RequestPermission |
+              RoundPermitted | LoadingPosition(k) |
+         ConveyorPosition(Table1, a) | ConveyorPosition(Table2, b))))] Pusher(stopped, innerOpen, outerOpen,
+             extended, aligned)
+)

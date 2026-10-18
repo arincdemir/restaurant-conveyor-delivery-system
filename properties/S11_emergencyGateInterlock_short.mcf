@@ -1,0 +1,8 @@
+% Initially the inner gate is open. After opening either gate, the paired
+% gate cannot open until the first one closes. Equivalent to the full S11.
+forall tbl: TableID .
+(
+    [(!CloseInnerGate(tbl))* . OpenOuterGate(tbl)] false
+    && [true* . OpenInnerGate(tbl) . (!CloseInnerGate(tbl))* . OpenOuterGate(tbl)] false
+    && [true* . OpenOuterGate(tbl) . (!CloseOuterGate(tbl))* . OpenInnerGate(tbl)] false
+)
