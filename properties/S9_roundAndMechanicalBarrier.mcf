@@ -1,0 +1,31 @@
+% S9: every advance needs a current stopped round, all three replies,
+% a closed inner gate and a retracted pusher at each table.
+% S5 supplies the mechanical part; S8 supplies stricter report counting.
+forall tbl: TableID .
+nu Barrier(active: Bool = false, pending: FSet(StationID) = {},
+           innerOpen: Bool = true, extended: Bool = false) .
+(
+    [(exists k, a, b: PlateSlot . (RequestPermission | RoundPermitted | LoadingPosition(k) |
+         ConveyorPosition(Table1, a) | ConveyorPosition(Table2, b)))] Barrier(true, {Kitchen, TableStation(Table1),
+             TableStation(Table2)}, innerOpen, extended)
+    && forall st: StationID . [StationDone(st)]
+        Barrier(active, pending - {st}, innerOpen, extended)
+    && [OpenInnerGate(tbl)] Barrier(active, pending, true, extended)
+    && [CloseInnerGate(tbl)] Barrier(active, pending, false, extended)
+    && [(exists pl: Plate . (Push(tbl) | BoxFilled(tbl) | PlateTransferred(tbl, pl)))] Barrier(active, pending,
+        innerOpen, true)
+    && [Retract(tbl)] Barrier(active, pending, innerOpen, false)
+    && [(exists pos: Position . Advance(pos))]
+        (val(active && pending == {} && !innerOpen && !extended)
+         && Barrier(false, {}, innerOpen, extended))
+    && [(EmergencyReceived(ConveyorStation) | EmergencyReceived(Kitchen) |
+         EmergencyReceived(TableStation(Table1)) | EmergencyReceived(TableStation(Table2)))] Barrier(false, {},
+             innerOpen, extended)
+    && [!((exists k, a, b: PlateSlot . (RequestPermission | RoundPermitted | LoadingPosition(k) |
+         ConveyorPosition(Table1, a) | ConveyorPosition(Table2, b))) || (exists st: StationID . StationDone(st)) ||
+          OpenInnerGate(tbl) || CloseInnerGate(tbl) || (exists pl: Plate . (Push(tbl) | BoxFilled(tbl) |
+              PlateTransferred(tbl, pl))) || Retract(tbl) || (exists pos: Position . Advance(pos)) ||
+              (EmergencyReceived(ConveyorStation) | EmergencyReceived(Kitchen) |
+         EmergencyReceived(TableStation(Table1)) | EmergencyReceived(TableStation(Table2))))]
+        Barrier(active, pending, innerOpen, extended)
+)

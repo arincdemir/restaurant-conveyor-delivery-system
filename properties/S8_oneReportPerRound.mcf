@@ -1,0 +1,30 @@
+% S8: exactly one StationDone per station before a completed round can advance.
+% A skipped station sends SendSkip followed by StationDone, not either/or.
+% No duplicate/out-of-round report or skip is allowed. Emergency notification
+% cancels an unfinished round without requiring the remaining reports.
+% This safety check does not assume fair scheduling of pending reports.
+nu Reports(active: Bool = false, pending: FSet(StationID) = {},
+           skipped: FSet(StationID) = {}) .
+(
+    [(exists k, a, b: PlateSlot . (RequestPermission | RoundPermitted | LoadingPosition(k) |
+         ConveyorPosition(Table1, a) | ConveyorPosition(Table2, b)))]
+        (val(!active) && Reports(true, {Kitchen, TableStation(Table1), TableStation(Table2)}, {}))
+    && forall st: StationID .
+        [SendSkip(st)]
+        (val(active && st in pending && !(st in skipped))
+         && Reports(active, pending, skipped + {st}))
+    && forall st: StationID .
+        [StationDone(st)]
+        (val(active && st in pending) && Reports(active, pending - {st}, skipped))
+    && [(exists pos: Position . Advance(pos))]
+        (val(active && pending == {}) && Reports(false, {}, {}))
+    && [(EmergencyReceived(ConveyorStation) | EmergencyReceived(Kitchen) |
+         EmergencyReceived(TableStation(Table1)) | EmergencyReceived(TableStation(Table2)))]
+        Reports(false, {}, {})
+    && [!((exists k, a, b: PlateSlot . (RequestPermission | RoundPermitted | LoadingPosition(k) |
+         ConveyorPosition(Table1, a) | ConveyorPosition(Table2, b))) || (exists st: StationID . SendSkip(st) ||
+             StationDone(st)) || (exists pos: Position . Advance(pos)) || (EmergencyReceived(ConveyorStation) |
+             EmergencyReceived(Kitchen) |
+         EmergencyReceived(TableStation(Table1)) | EmergencyReceived(TableStation(Table2))))]
+        Reports(active, pending, skipped)
+)

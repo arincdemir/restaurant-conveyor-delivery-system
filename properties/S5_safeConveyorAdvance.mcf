@@ -1,0 +1,14 @@
+% S5: advance only when the monitored inner gate is closed and pusher retracted.
+% Universal quantification checks both tables; inner gates start open.
+forall tbl: TableID .
+nu Motion(innerOpen: Bool = true, extended: Bool = false) .
+(
+    [OpenInnerGate(tbl)] Motion(true, extended)
+    && [CloseInnerGate(tbl)] Motion(false, extended)
+    && [(exists pl: Plate . (Push(tbl) | BoxFilled(tbl) | PlateTransferred(tbl, pl)))] Motion(innerOpen, true)
+    && [Retract(tbl)] Motion(innerOpen, false)
+    && [(exists pos: Position . Advance(pos))] val(!innerOpen && !extended)
+    && [!(OpenInnerGate(tbl) || CloseInnerGate(tbl) || (exists pl: Plate . (Push(tbl) | BoxFilled(tbl) |
+        PlateTransferred(tbl, pl))) || Retract(tbl))]
+        Motion(innerOpen, extended)
+)

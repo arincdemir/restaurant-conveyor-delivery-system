@@ -1,0 +1,16 @@
+% S10: from StartEmergency until the synchronized reset, no belt advancement,
+% loading, pushing or inner-gate opening may occur. Also forbid conveyor start.
+% Loading and pushing are matched as their complete observable multi-actions.
+[true* . StartEmergency .
+ (!(EndEmergency |
+    EmergencyCleared(ConveyorStation) |
+    EmergencyCleared(Kitchen) |
+    EmergencyCleared(TableStation(Table1)) |
+    EmergencyCleared(TableStation(Table2))))* .
+ (StartConveyor ||
+  (exists pos: Position . Advance(pos)) ||
+  (exists oid: OrderID, incoming: Plate .
+      (LoadPlate(oid) | PlateLoaded(incoming))) ||
+  (exists tbl: TableID, incoming: Plate .
+      (Push(tbl) | BoxFilled(tbl) | PlateTransferred(tbl, incoming))) ||
+  (exists tbl: TableID . OpenInnerGate(tbl)))] false

@@ -1,0 +1,20 @@
+[true* . (SendSkip(ConveyorStation) || StationDone(ConveyorStation))] false
+&& (
+% Same protocol per station: 0 idle, 1 pending, 2 skipped, 3 completed.
+% ConveyorStation is not a reporting station.
+% Emergency notification cancels the round at any stage.
+forall st: StationID . (val(st != ConveyorStation) =>
+nu Report(stage: Nat = 0) .
+(
+    [(exists k, a, b: PlateSlot . (RequestPermission | RoundPermitted | LoadingPosition(k) |
+         ConveyorPosition(Table1, a) | ConveyorPosition(Table2, b)))] (val(stage == 0) && Report(1))
+    && [SendSkip(st)] (val(stage == 1) && Report(2))
+    && [StationDone(st)] (val(stage == 1 || stage == 2) && Report(3))
+    && [(exists pos: Position . Advance(pos))] (val(stage == 3) && Report(0))
+    && [(EmergencyReceived(ConveyorStation) | EmergencyReceived(Kitchen) |
+         EmergencyReceived(TableStation(Table1)) | EmergencyReceived(TableStation(Table2)))] Report(0)
+    && [!((exists k, a, b: PlateSlot . (RequestPermission | RoundPermitted | LoadingPosition(k) |
+         ConveyorPosition(Table1, a) | ConveyorPosition(Table2, b))) || SendSkip(st) || StationDone(st) || (exists
+             pos: Position . Advance(pos)) || (EmergencyReceived(ConveyorStation) | EmergencyReceived(Kitchen) |
+         EmergencyReceived(TableStation(Table1)) | EmergencyReceived(TableStation(Table2))))] Report(stage)
+)))

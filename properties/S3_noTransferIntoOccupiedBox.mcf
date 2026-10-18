@@ -1,0 +1,10 @@
+% S3: a box starts empty, is filled by transfer, and is emptied by collection.
+% A second transfer is forbidden until collection has occurred.
+forall tbl: TableID .
+nu Box(full: Bool = false) .
+(
+    [(exists pl: Plate . (Push(tbl) | BoxFilled(tbl) | PlateTransferred(tbl, pl)))] (val(!full) && Box(true))
+    && [BoxEmptied(tbl)] Box(false)
+    && [!((exists pl: Plate . (Push(tbl) | BoxFilled(tbl) | PlateTransferred(tbl, pl))) || BoxEmptied(tbl))]
+        Box(full)
+)

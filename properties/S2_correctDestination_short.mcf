@@ -1,0 +1,3 @@
+% Same guarantee; compact form.
+[true* . (exists tbl: TableID, pl: Plate .
+    val(tbl != t_id(pl)) && (Push(tbl) | BoxFilled(tbl) | PlateTransferred(tbl, pl)))] false

@@ -1,0 +1,10 @@
+% Same guarantee; compact form.
+(
+    ([true*] forall tbl: TableID, pl: Plate . [(Push(tbl) | BoxFilled(tbl) | PlateTransferred(tbl, pl))]
+        val(o_id(pl) < maxOrders))
+    && forall oid: OrderID . (val(oid < maxOrders) =>
+        [true* . (exists tbl: TableID, pl: Plate . val(o_id(pl) == oid) && (Push(tbl) | BoxFilled(tbl) |
+            PlateTransferred(tbl, pl))) .
+         true* . (exists tbl: TableID, pl: Plate . val(o_id(pl) == oid) && (Push(tbl) | BoxFilled(tbl) |
+             PlateTransferred(tbl, pl)))] false)
+)

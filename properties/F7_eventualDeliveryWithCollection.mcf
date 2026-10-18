@@ -1,0 +1,69 @@
+% F7 with an additional collection assumption: retain the original infinite
+% advancement and eventual availability assumptions, and require every plate
+% occupying the destination box to be eventually collected.
+% Along an infinite execution, that collection condition is equivalent to the
+% box being empty infinitely often. After reaching availability without delivery,
+% a counterexample must repeatedly reach both Advance and an empty box on the
+% same execution, always avoiding this plate's delivery. Negate such a path.
+forall tbl: TableID .
+nu ObserveBox(full: Bool = false, outerOpen: Bool = false) .
+(
+    [(exists incoming: Plate .
+        (Push(tbl) | BoxFilled(tbl) | PlateTransferred(tbl, incoming)))]
+        ObserveBox(true, outerOpen)
+    && [BoxEmptied(tbl)] ObserveBox(false, outerOpen)
+    && [OpenOuterGate(tbl)] ObserveBox(full, true)
+    && [CloseOuterGate(tbl)] ObserveBox(full, false)
+    && [!((exists incoming: Plate .
+             (Push(tbl) | BoxFilled(tbl) | PlateTransferred(tbl, incoming))) ||
+          BoxEmptied(tbl) || OpenOuterGate(tbl) || CloseOuterGate(tbl))]
+        ObserveBox(full, outerOpen)
+    && forall oid: OrderID . (val(oid < maxOrders) =>
+        [(LoadPlate(oid) | PlateLoaded(plate(oid, tbl)))]
+        !(mu WaitForAvailability(waitingFull: Bool = full, waitingOuter: Bool = outerOpen) .
+        (
+            (val(!waitingFull && !waitingOuter) &&
+                nu FairCycle(cycleFull: Bool = waitingFull) .
+                mu ReachAdvance(advanceFull: Bool = cycleFull) .
+                (
+                    <(exists pos: Position . Advance(pos))>
+                        mu ReachEmpty(emptyFull: Bool = advanceFull) .
+                        (
+                            (val(!emptyFull) && FairCycle(emptyFull))
+                            || <((exists incoming: Plate .
+                                    (Push(tbl) | BoxFilled(tbl) | PlateTransferred(tbl, incoming))) &&
+                                 !(Push(tbl) | BoxFilled(tbl) | PlateTransferred(tbl, plate(oid, tbl))))>
+                                ReachEmpty(true)
+                            || <BoxEmptied(tbl)> ReachEmpty(false)
+                            || <!(
+                                (exists incoming: Plate .
+                                    (Push(tbl) | BoxFilled(tbl) | PlateTransferred(tbl, incoming))) ||
+                                BoxEmptied(tbl)
+                            )> ReachEmpty(emptyFull)
+                        )
+                    || <((exists incoming: Plate .
+                            (Push(tbl) | BoxFilled(tbl) | PlateTransferred(tbl, incoming))) &&
+                         !(Push(tbl) | BoxFilled(tbl) | PlateTransferred(tbl, plate(oid, tbl))))>
+                        ReachAdvance(true)
+                    || <BoxEmptied(tbl)> ReachAdvance(false)
+                    || <!(
+                        (exists pos: Position . Advance(pos)) ||
+                        (exists incoming: Plate .
+                            (Push(tbl) | BoxFilled(tbl) | PlateTransferred(tbl, incoming))) ||
+                        BoxEmptied(tbl)
+                    )> ReachAdvance(advanceFull)
+                ))
+            || <((exists incoming: Plate .
+                    (Push(tbl) | BoxFilled(tbl) | PlateTransferred(tbl, incoming))) &&
+                 !(Push(tbl) | BoxFilled(tbl) | PlateTransferred(tbl, plate(oid, tbl))))>
+                WaitForAvailability(true, waitingOuter)
+            || <BoxEmptied(tbl)> WaitForAvailability(false, waitingOuter)
+            || <OpenOuterGate(tbl)> WaitForAvailability(waitingFull, true)
+            || <CloseOuterGate(tbl)> WaitForAvailability(waitingFull, false)
+            || <!(
+                (exists incoming: Plate .
+                    (Push(tbl) | BoxFilled(tbl) | PlateTransferred(tbl, incoming))) ||
+                BoxEmptied(tbl) || OpenOuterGate(tbl) || CloseOuterGate(tbl)
+            )> WaitForAvailability(waitingFull, waitingOuter)
+        )))
+)

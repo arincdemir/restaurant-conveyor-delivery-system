@@ -1,0 +1,24 @@
+% Same S12 protocol: 0 = normal, 1 = requested, 2 = notified, 3 = cleared.
+nu P(stage: Nat = 0) .
+(
+    [StartEmergency] P(1)
+    && [(EmergencyReceived(ConveyorStation) | EmergencyReceived(Kitchen) |
+         EmergencyReceived(TableStation(Table1)) | EmergencyReceived(TableStation(Table2)))]
+        (val(stage > 0) && P(if(stage == 1, 2, stage)))
+    && [OperatorClearEmergency] (val(stage >= 2) && P(3))
+    && [(EndEmergency | EmergencyCleared(ConveyorStation) | EmergencyCleared(Kitchen) |
+         EmergencyCleared(TableStation(Table1)) | EmergencyCleared(TableStation(Table2)))]
+        (val(stage == 3) && P(0))
+    && [(exists meal: Meal, tbl: TableID . AcceptOrder(meal, tbl)) || StartConveyor ||
+        (exists pos: Position . Advance(pos)) ||
+        (exists oid: OrderID, pl: Plate . (LoadPlate(oid) | PlateLoaded(pl))) ||
+        (exists tbl: TableID, pl: Plate . (Push(tbl) | BoxFilled(tbl) | PlateTransferred(tbl, pl))) ||
+        (exists tbl: TableID . OpenInnerGate(tbl)) ||
+        (exists a, b, c: PlateSlot . (RequestPermission | RoundPermitted | LoadingPosition(a) |
+            ConveyorPosition(Table1, b) | ConveyorPosition(Table2, c)))] val(stage == 0)
+    && [!(StartEmergency || OperatorClearEmergency ||
+          (EmergencyReceived(ConveyorStation) | EmergencyReceived(Kitchen) |
+           EmergencyReceived(TableStation(Table1)) | EmergencyReceived(TableStation(Table2))) ||
+          (EndEmergency | EmergencyCleared(ConveyorStation) | EmergencyCleared(Kitchen) |
+           EmergencyCleared(TableStation(Table1)) | EmergencyCleared(TableStation(Table2))))] P(stage)
+)

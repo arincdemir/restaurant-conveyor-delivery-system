@@ -1,0 +1,9 @@
+% Same guarantee; compact form.
+nu Orders(nextID: OrderID = 0) .
+( forall meal: Meal, tbl: TableID . [AcceptOrder(meal, tbl)]
+        ( <true* . AddPlate(nextID, tbl) . true* .
+             (LoadPlate(nextID) | PlateLoaded(plate(nextID, tbl)))> true
+            && Orders(nextID + 1)
+        )
+    && [!(exists meal: Meal, tbl: TableID . AcceptOrder(meal, tbl))] Orders(nextID)
+)
