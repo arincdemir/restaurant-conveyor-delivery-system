@@ -14,6 +14,11 @@ sort
     PlateSlot = struct Empty | Occupied(p: Plate);
     GateState = struct Closed | Open;
     SystemMode = struct Normal | Emergency;
+    ManagerPhase = struct ManagerNormal | NotificationPending | WaitingForOperator | WaitingForReset;
+    TablePhase = struct WaitingForRound | OpeningForDelivery | PushingPlate |
+        RetractingPusher | ClosingAfterPush | OpeningForCollection |
+        ClosingForSkip | ReportingSkip | ReportingDone | ClosingAfterCollection |
+        ClosingAfterReset | OpeningAfterReset | EmergencyRetracting | EmergencyRecovery;
 
 % ==============================================================================
 % MAPS & EQUATIONS
@@ -117,21 +122,17 @@ proc
     OrderManager(
         orders: OrderID -> OrderEntry,
         nextID: OrderID,
-        mode: SystemMode,
-        emergencySent: Bool,
-        operatorCleared: Bool,
+        phase: ManagerPhase,
         pending: FSet(OrderID)
     ) =
         % Accept at most maxOrders orders (IDs 0 to maxOrders - 1).
-        (mode == Normal && nextID < maxOrders) ->
+        (phase == ManagerNormal && nextID < maxOrders) ->
             (sum meal: Meal, tbl: TableID .
                 AcceptOrder(meal, tbl) .
                 OrderManager(
                     orders[nextID -> order(meal, tbl)],
                     nextID + 1,
-                    mode,
-                    emergencySent,
-                    operatorCleared,
+                    phase,
                     pending + {nextID}
                 ))
 
@@ -142,51 +143,51 @@ proc
                 SendOrder(oid, orders(oid)) .
                 OrderManager(pending = pending - {oid})
 
-        + (mode == Normal) ->
+        + (phase == ManagerNormal) ->
             PermitRound . OrderManager()
 
         % Permissions synchronize with the actual operation, never in advance.
-        + (mode == Normal) ->
+        + (phase == ManagerNormal) ->
             PermitStartConveyor . OrderManager()
 
         + sum pos: Position .
-            (mode == Normal && pos < 6) ->
+            (phase == ManagerNormal && pos < 6) ->
                 PermitAdvance(pos) . OrderManager()
 
         + sum oid: OrderID .
-            (mode == Normal && oid < maxOrders) ->
+            (phase == ManagerNormal && oid < maxOrders) ->
                 PermitLoadPlate(oid) . OrderManager()
 
         + sum tbl: TableID .
-            (mode == Normal) ->
+            (phase == ManagerNormal) ->
                 (PermitOpenInnerGate(tbl) . OrderManager()
                  + PermitPush(tbl) . OrderManager())
 
         % Record the request immediately and disable all unsafe operations.
-        + (mode == Normal) ->
+        + (phase == ManagerNormal) ->
             StartEmergency .
-            OrderManager(mode = Emergency, emergencySent = false, operatorCleared = false)
+            OrderManager(phase = NotificationPending)
 
-        % Broadcast at emergency receivers after any started safe sequences finish.
-        + (mode == Emergency && !emergencySent) ->
+        % Tables receive between any actions; kitchen/conveyor prefixes may finish first.
+        + (phase == NotificationPending) ->
             (IssueEmergency(ConveyorStation) |
              IssueEmergency(Kitchen) |
              IssueEmergency(TableStation(Table1)) |
              IssueEmergency(TableStation(Table2))) .
-            OrderManager(emergencySent = true)
+            OrderManager(phase = WaitingForOperator)
 
-        + (mode == Emergency && emergencySent && !operatorCleared) ->
+        + (phase == WaitingForOperator) ->
             OperatorClearEmergency .
-            OrderManager(operatorCleared = true)
+            OrderManager(phase = WaitingForReset)
 
         % Reset requires operator clearance and all four recovery receivers.
-        + (mode == Emergency && emergencySent && operatorCleared) ->
+        + (phase == WaitingForReset) ->
             (EndEmergency |
              IssueClearEmergency(ConveyorStation) |
              IssueClearEmergency(Kitchen) |
              IssueClearEmergency(TableStation(Table1)) |
              IssueClearEmergency(TableStation(Table2))) .
-            OrderManager(mode = Normal, emergencySent = false, operatorCleared = false);
+            OrderManager(phase = ManagerNormal);
 
     ConveyorBelt(
         pos: Position,
@@ -255,78 +256,100 @@ proc
         innerGateState: GateState,
         outerGateState: GateState,
         boxOccupied: BoxOccupied,
-        mode: SystemMode
+        phase: TablePhase,
+        incoming: PlateSlot
     ) =
-        (mode == Normal) ->
+        % A round starts only when this table has finished its previous work.
+        (phase == WaitingForRound) ->
             (sum inSlot: PlateSlot .
                 ReceivesConveyorPosition(tableID, inSlot) .
-                (inSlot == Empty ||
-                 t_id(p(inSlot)) != tableID ||
-                 boxOccupied == true ||
-                 outerGateState == Open) ->
-                    ((innerGateState == Open) ->
-                        CloseInnerGate(tableID) .
-                        SendSkip(TableStation(tableID)) .
-                        SendStationDone(TableStation(tableID)) .
-                        DeliveryBox(innerGateState = Closed)
-                     <>
-                        SendSkip(TableStation(tableID)) .
-                        SendStationDone(TableStation(tableID)) .
-                        DeliveryBox())
+                ((inSlot == Empty || t_id(p(inSlot)) != tableID ||
+                  boxOccupied || outerGateState == Open) ->
+                    DeliveryBox(
+                        phase = if(innerGateState == Open, ClosingForSkip, ReportingSkip),
+                        incoming = Empty
+                    )
                  <>
-                    ((innerGateState == Closed) ->
-                        PrepareDelivery(tableID, p(inSlot))
-                     <>
-                        DeliverPlate(tableID, p(inSlot))))
+                    DeliveryBox(
+                        phase = if(innerGateState == Closed, OpeningForDelivery, PushingPlate),
+                        incoming = inSlot
+                    )))
 
-        + (mode == Normal && boxOccupied && outerGateState == Open) ->
-            BoxEmptied(tableID) . CloseOuterGate(tableID) .
-            DeliveryBox(innerGateState = Closed, outerGateState = Closed, boxOccupied = false)
+        % Delivery: each action returns here, so notification can interrupt any step.
+        + (phase == OpeningForDelivery) ->
+            RequestOpenInnerGate(tableID) .
+            DeliveryBox(innerGateState = Open, phase = PushingPlate)
 
-        + (mode == Normal) ->
+        + (phase == PushingPlate) ->
+            (RequestPush(tableID) | BoxFilled(tableID) | OffersTransfer(tableID, p(incoming))) .
+            DeliveryBox(boxOccupied = true, phase = RetractingPusher, incoming = Empty)
+
+        + (phase == RetractingPusher) ->
+            Retract(tableID) . DeliveryBox(phase = ClosingAfterPush)
+
+        + (phase == ClosingAfterPush) ->
+            CloseInnerGate(tableID) .
+            DeliveryBox(innerGateState = Closed, phase = OpeningForCollection)
+
+        + (phase == OpeningForCollection) ->
+            OpenOuterGate(tableID) .
+            DeliveryBox(outerGateState = Open, phase = ReportingDone)
+
+        % Skips and successful deliveries share the completion-report phase.
+        + (phase == ClosingForSkip) ->
+            CloseInnerGate(tableID) .
+            DeliveryBox(innerGateState = Closed, phase = ReportingSkip)
+
+        + (phase == ReportingSkip) ->
+            SendSkip(TableStation(tableID)) . DeliveryBox(phase = ReportingDone)
+
+        + (phase == ReportingDone) ->
+            SendStationDone(TableStation(tableID)) . DeliveryBox(phase = WaitingForRound)
+
+        + (phase == WaitingForRound && boxOccupied && outerGateState == Open) ->
+            BoxEmptied(tableID) .
+            DeliveryBox(boxOccupied = false, phase = ClosingAfterCollection)
+
+        + (phase == ClosingAfterCollection) ->
+            CloseOuterGate(tableID) .
+            DeliveryBox(outerGateState = Closed, phase = WaitingForRound)
+
+        % Empty-box reset restores the original inner-open ready state.
+        + (phase == ClosingAfterReset) ->
+            CloseOuterGate(tableID) .
+            DeliveryBox(outerGateState = Closed, phase = OpeningAfterReset)
+
+        + (phase == OpeningAfterReset) ->
+            RequestOpenInnerGate(tableID) .
+            DeliveryBox(innerGateState = Open, phase = WaitingForRound)
+
+        % Cancel normal work; only an already-started push still needs retraction.
+        % Before transfer the plate stays on the belt; afterwards boxOccupied is true.
+        + (phase != EmergencyRetracting && phase != EmergencyRecovery) ->
             ReceivesEmergency(TableStation(tableID)) .
-            DeliveryBox(mode = Emergency)
+            DeliveryBox(
+                phase = if(phase == RetractingPusher, EmergencyRetracting, EmergencyRecovery),
+                incoming = Empty
+            )
 
-        + (mode == Emergency && innerGateState == Open) ->
+        + (phase == EmergencyRetracting) ->
+            Retract(tableID) . DeliveryBox(phase = EmergencyRecovery)
+
+        + (phase == EmergencyRecovery && innerGateState == Open) ->
             CloseInnerGate(tableID) .
             DeliveryBox(innerGateState = Closed)
 
-        + (mode == Emergency && innerGateState == Closed && outerGateState == Closed) ->
+        + (phase == EmergencyRecovery && innerGateState == Closed && outerGateState == Closed) ->
             OpenOuterGate(tableID) .
             DeliveryBox(outerGateState = Open)
 
-        + (mode == Emergency && innerGateState == Closed && outerGateState == Open && boxOccupied) ->
+        + (phase == EmergencyRecovery && innerGateState == Closed && outerGateState == Open && boxOccupied) ->
             BoxEmptied(tableID) .
             DeliveryBox(boxOccupied = false)
 
-        + (mode == Emergency && innerGateState == Closed && outerGateState == Open) ->
+        + (phase == EmergencyRecovery && innerGateState == Closed && outerGateState == Open) ->
             ReceivesClearEmergency(TableStation(tableID)) .
-            (boxOccupied ->
-                DeliveryBox(mode = Normal)
-             <>
-                CloseOuterGate(tableID) . RestoreEmptyBox(tableID));
-
-    % Receive the emergency before opening; leave the plate on the belt for retry.
-    PrepareDelivery(tableID: TableID, incoming: Plate) =
-        RequestOpenInnerGate(tableID) . DeliverPlate(tableID, incoming)
-        + ReceivesEmergency(TableStation(tableID)) .
-            DeliveryBox(tableID, Closed, Closed, false, Emergency);
-
-    % A new emergency may also interrupt the empty-box reset sequence.
-    RestoreEmptyBox(tableID: TableID) =
-        RequestOpenInnerGate(tableID) .
-        DeliveryBox(tableID, Open, Closed, false, Normal)
-        + ReceivesEmergency(TableStation(tableID)) .
-            DeliveryBox(tableID, Closed, Closed, false, Emergency);
-
-    % Keep the incoming plate until the atomic transfer removes it from the belt.
-    DeliverPlate(tableID: TableID, incoming: Plate) =
-        (RequestPush(tableID) | BoxFilled(tableID) | OffersTransfer(tableID, incoming)) .
-        Retract(tableID) . CloseInnerGate(tableID) . OpenOuterGate(tableID) .
-        SendStationDone(TableStation(tableID)) .
-        DeliveryBox(tableID, Closed, Open, true, Normal)
-        + ReceivesEmergency(TableStation(tableID)) .
-            DeliveryBox(tableID, Open, Closed, false, Emergency);
+            DeliveryBox(phase = if(boxOccupied, WaitingForRound, ClosingAfterReset));
 
     KitchenLoader(
         orders: OrderID -> OrderEntry,
@@ -356,7 +379,7 @@ proc
         + (mode == Normal && !skipped && (posOneOccupied || unassigned == {})) ->
             SendSkip(Kitchen) . SendStationDone(Kitchen) .
             KitchenLoader(skipped = true)
-
+ 
         + sum oid: OrderID .
             (mode == Normal && oid in unassigned && !posOneOccupied &&
              !skipped && prepared == Empty && oid < maxOrders) ->
@@ -415,9 +438,7 @@ proc
                 OrderManager(
                     lambda id: OrderID . order(Doner, Table1),
                     0,
-                    Normal,
-                    false,
-                    false,
+                    ManagerNormal,
                     {}
                 )
                 || ConveyorBelt(
@@ -435,8 +456,8 @@ proc
                     Normal,
                     Empty
                 )
-                || DeliveryBox(Table1, Open, Closed, false, Normal)
-                || DeliveryBox(Table2, Open, Closed, false, Normal)
+                || DeliveryBox(Table1, Open, Closed, false, WaitingForRound, Empty)
+                || DeliveryBox(Table2, Open, Closed, false, WaitingForRound, Empty)
             )
         );
 
