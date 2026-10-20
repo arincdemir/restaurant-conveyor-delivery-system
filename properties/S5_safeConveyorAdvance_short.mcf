@@ -1,8 +1,0 @@
-% Same guarantee; compact form.
-forall tbl: TableID .
-(
-    [(!CloseInnerGate(tbl))* . (exists pos: Position . Advance(pos))] false
-    && [true* . OpenInnerGate(tbl) . (!CloseInnerGate(tbl))* . (exists pos: Position . Advance(pos))] false
-    && [true* . (exists pl: Plate . (Push(tbl) | BoxFilled(tbl) | PlateTransferred(tbl, pl))) . (!Retract(tbl))* .
-        (exists pos: Position . Advance(pos))] false
-)

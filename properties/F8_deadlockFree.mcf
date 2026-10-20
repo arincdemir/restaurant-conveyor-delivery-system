@@ -1,8 +1,0 @@
-% F8: every reachable state has at least one outgoing transition.
-% Operator actions count as transitions; this does not establish fairness.
-% The current model has no intended terminal states.
-nu Live .
-(
-    <true> true
-    && [true] Live
-)

@@ -1,0 +1,9 @@
+hw.model: Mac17,4
+hw.machine: arm64
+hw.ncpu: 10
+hw.physicalcpu: 10
+hw.logicalcpu: 10
+hw.memsize: 25769803776
+machdep.cpu.brand_string: Apple M5
+Source command: sysctl hw.model hw.machine hw.ncpu hw.physicalcpu hw.logicalcpu hw.memsize machdep.cpu.brand_string
+Read with read-only elevated permissions after sandbox denied sysctl.

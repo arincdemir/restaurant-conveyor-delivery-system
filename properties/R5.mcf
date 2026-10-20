@@ -1,0 +1,10 @@
+% R5: A plate may enter only an empty delivery box.
+% Scope: six belt positions, two tables, three total orders; atomic events.
+
+% CHECK: empty-box
+% Between a delivery and collection, another delivery to that box is forbidden.
+(
+forall tbl: TableID .
+[true* . (exists pl: Plate . (Push(tbl) | BoxFilled(tbl) | PlateTransferred(tbl, pl))) . (!BoxEmptied(tbl))* . (exists pl: Plate . (Push(tbl) | BoxFilled(tbl) | PlateTransferred(tbl, pl)))] false
+)
+% END CHECK

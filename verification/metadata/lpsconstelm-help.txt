@@ -1,0 +1,39 @@
+Usage: lpsconstelm [OPTION]... [INFILE [OUTFILE]]
+Remove constant process parameters from the LPS in INFILE and write the result 
+to OUTFILE. If INFILE is not present, standard input is used. If OUTFILE is not 
+present, standard output is used.
+
+Options:
+  -c, --ignore-conditions  ignore conditions by assuming they evaluate to true
+  -f, --instantiate-free-variables
+                           allow free variables to be instantiated as a side 
+                           effect of the algorithm. This functionality is 
+                           untested!
+  -QNUM, --qlimit=NUM      limit enumeration of universal and existential 
+                           quantifiers in data expressions to NUM iterations 
+                           (default NUM=10, NUM=0 for unlimited).
+  -rNAME, --rewriter=NAME  use rewrite strategy NAME:
+                             'jitty' jitty rewriting (default)
+                             'jittyc' compiled jitty rewriting
+                             'jittyp' jitty rewriting with prover
+  -s, --remove-singleton-sorts
+                           remove parameters with single element sorts
+  -t, --remove-trivial-summands
+                           remove summands with condition false
+      --timings[=FILE]     append timing measurements to FILE. Measurements are 
+                           written to standard error if no FILE is provided
+
+Standard options:
+  -q, --quiet              do not display warning messages
+  -v, --verbose            display short log messages
+  -d, --debug              display detailed log messages
+      --log-level=LEVEL    display log messages up to and including level; 
+                           either warn, verbose, debug or trace
+  -h, --help               display help information
+      --version            display version information
+      --help-all           display help information, including hidden and 
+                           experimental options
+
+Report bugs at <http://www.mcrl2.org/issuetracker>.
+
+See also the manual at <http://www.mcrl2.org/web/user_manual/tools/release/lpsconstelm.html>.

@@ -1,0 +1,24 @@
+Usage: lpssumelm [OPTION]... [INFILE [OUTFILE]]
+Remove superfluous summations from the linear process specification (LPS) in 
+INFILE and write the result to OUTFILE. If INFILE is not present, stdin is 
+used. If OUTFILE is not present, stdout is used.
+
+Options:
+  -c, --decluster          first decluster disjunctive conditions
+      --timings[=FILE]     append timing measurements to FILE. Measurements are 
+                           written to standard error if no FILE is provided
+
+Standard options:
+  -q, --quiet              do not display warning messages
+  -v, --verbose            display short log messages
+  -d, --debug              display detailed log messages
+      --log-level=LEVEL    display log messages up to and including level; 
+                           either warn, verbose, debug or trace
+  -h, --help               display help information
+      --version            display version information
+      --help-all           display help information, including hidden and 
+                           experimental options
+
+Report bugs at <http://www.mcrl2.org/issuetracker>.
+
+See also the manual at <http://www.mcrl2.org/web/user_manual/tools/release/lpssumelm.html>.

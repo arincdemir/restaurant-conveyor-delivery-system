@@ -1,0 +1,64 @@
+scope	stage	exit_code	real_seconds	command
+graph	mcrl22lps	0	0.12	mcrl22lps --lin-method=regular ../restaurant-conveyor-delivery-system_spec.mcrl2 model.lps 
+graph	lpsconstelm	0	0.04	lpsconstelm model.lps model.const.lps 
+graph	lpssumelm	0	0.01	lpssumelm model.const.lps model.ready.lps 
+graph	lps2lts	0	57.02	lps2lts --cached --rewriter=jittyc --verbose model.ready.lps complete.lts 
+graph	ltsconvert	0	32.19	ltsconvert --equivalence=bisim complete.lts reduced.lts 
+metadata	complete-info	0	17.11	ltsinfo complete.lts 
+metadata	reduced-info	0	9.20	ltsinfo reduced.lts 
+R1	lts2pbes	0	192.29	lts2pbes --verbose --preprocess-modal-operators --formula=../properties/R1.mcf reduced.lts R1.pbes 
+R1	pbesrewr	0	88.09	pbesrewr --verbose --pbes-rewriter=quantifier-one-point R1.pbes R1.one.pbes 
+R1	pbesparelm	0	98.37	pbesparelm --verbose R1.one.pbes R1.optimized.pbes 
+R1	pbessolve	0	136.21	pbessolve --verbose --rewriter=jittyc --solve-strategy=0 R1.optimized.pbes 
+R2	lts2pbes	0	33.21	lts2pbes --verbose --preprocess-modal-operators --formula=../properties/R2.mcf reduced.lts R2.pbes 
+R2	pbesrewr	0	11.71	pbesrewr --verbose --pbes-rewriter=quantifier-one-point R2.pbes R2.one.pbes 
+R2	pbesparelm	0	11.71	pbesparelm --verbose R2.one.pbes R2.optimized.pbes 
+R2	pbessolve	0	22.45	pbessolve --verbose --rewriter=jittyc --solve-strategy=0 R2.optimized.pbes 
+R3	lts2pbes	0	170.89	lts2pbes --verbose --preprocess-modal-operators --formula=../properties/R3.mcf reduced.lts R3.pbes 
+R3	pbesrewr	0	72.44	pbesrewr --verbose --pbes-rewriter=quantifier-one-point R3.pbes R3.one.pbes 
+R3	pbesparelm	0	82.75	pbesparelm --verbose R3.one.pbes R3.optimized.pbes 
+R3	pbessolve	0	152.35	pbessolve --verbose --rewriter=jittyc --solve-strategy=0 R3.optimized.pbes 
+R4	lts2pbes	0	171.87	lts2pbes --verbose --preprocess-modal-operators --formula=../properties/R4.mcf reduced.lts R4.pbes 
+R4	pbesrewr	0	48.53	pbesrewr --verbose --pbes-rewriter=quantifier-one-point R4.pbes R4.one.pbes 
+R4	pbesparelm	0	59.42	pbesparelm --verbose R4.one.pbes R4.optimized.pbes 
+R4	pbessolve	0	62.48	pbessolve --verbose --rewriter=jittyc --solve-strategy=0 R4.optimized.pbes 
+R5	lts2pbes	0	67.62	lts2pbes --verbose --preprocess-modal-operators --formula=../properties/R5.mcf reduced.lts R5.pbes 
+R5	pbesrewr	0	31.49	pbesrewr --verbose --pbes-rewriter=quantifier-one-point R5.pbes R5.one.pbes 
+R5	pbesparelm	0	35.26	pbesparelm --verbose R5.one.pbes R5.optimized.pbes 
+R5	pbessolve	0	49.53	pbessolve --verbose --rewriter=jittyc --solve-strategy=0 R5.optimized.pbes 
+R6	lts2pbes	0	670.68	lts2pbes --verbose --preprocess-modal-operators --formula=../properties/R6.mcf reduced.lts R6.pbes 
+R6	pbesrewr	0	183.66	pbesrewr --verbose --pbes-rewriter=quantifier-one-point R6.pbes R6.one.pbes 
+R6	pbesparelm	0	210.21	pbesparelm --verbose R6.one.pbes R6.optimized.pbes 
+R6	pbessolve	0	361.30	pbessolve --verbose --rewriter=jittyc --solve-strategy=0 R6.optimized.pbes 
+R7	lts2pbes	0	634.02	lts2pbes --verbose --preprocess-modal-operators --formula=../properties/R7.mcf reduced.lts R7.pbes 
+R7	pbesrewr	0	145.81	pbesrewr --verbose --pbes-rewriter=quantifier-one-point R7.pbes R7.one.pbes 
+R7	pbesparelm	0	173.85	pbesparelm --verbose R7.one.pbes R7.optimized.pbes 
+R7	pbessolve	0	237.15	pbessolve --verbose --rewriter=jittyc --solve-strategy=0 R7.optimized.pbes 
+R8	lts2pbes	0	499.29	lts2pbes --verbose --preprocess-modal-operators --formula=../properties/R8.mcf reduced.lts R8.pbes 
+R8	pbesrewr	0	172.88	pbesrewr --verbose --pbes-rewriter=quantifier-one-point R8.pbes R8.one.pbes 
+R8	pbesparelm	0	182.98	pbesparelm --verbose R8.one.pbes R8.optimized.pbes 
+R8	pbessolve	0	289.42	pbessolve --verbose --rewriter=jittyc --solve-strategy=0 R8.optimized.pbes 
+R9	lts2pbes	0	69.79	lts2pbes --verbose --preprocess-modal-operators --formula=../properties/R9.mcf reduced.lts R9.pbes 
+R9	pbesrewr	0	24.47	pbesrewr --verbose --pbes-rewriter=quantifier-one-point R9.pbes R9.one.pbes 
+R9	pbesparelm	0	24.23	pbesparelm --verbose R9.one.pbes R9.optimized.pbes 
+R9	pbessolve	0	38.64	pbessolve --verbose --rewriter=jittyc --solve-strategy=0 R9.optimized.pbes 
+R10	lts2pbes	0	48.08	lts2pbes --verbose --preprocess-modal-operators --formula=../properties/R10.mcf reduced.lts R10.pbes 
+R10	pbesrewr	0	13.08	pbesrewr --verbose --pbes-rewriter=quantifier-one-point R10.pbes R10.one.pbes 
+R10	pbesparelm	0	13.89	pbesparelm --verbose R10.one.pbes R10.optimized.pbes 
+R10	pbessolve	0	24.79	pbessolve --verbose --rewriter=jittyc --solve-strategy=0 R10.optimized.pbes 
+R11	lts2pbes	0	90.39	lts2pbes --verbose --preprocess-modal-operators --formula=../properties/R11.mcf reduced.lts R11.pbes 
+R11	pbesrewr	0	37.43	pbesrewr --verbose --pbes-rewriter=quantifier-one-point R11.pbes R11.one.pbes 
+R11	pbesparelm	0	75.18	pbesparelm --verbose R11.one.pbes R11.optimized.pbes 
+R11	pbessolve	0	46.70	pbessolve --verbose --rewriter=jittyc --solve-strategy=0 R11.optimized.pbes 
+R12	lts2pbes	0	166.01	lts2pbes --verbose --preprocess-modal-operators --formula=../properties/R12.mcf reduced.lts R12.pbes 
+R12	pbesrewr	0	75.92	pbesrewr --verbose --pbes-rewriter=quantifier-one-point R12.pbes R12.one.pbes 
+R12	pbesparelm	0	92.21	pbesparelm --verbose R12.one.pbes R12.optimized.pbes 
+R12	pbessolve	143	5261.74	pbessolve --verbose --rewriter=jittyc --solve-strategy=0 R12.optimized.pbes 
+R13	lts2pbes	0	131.86	lts2pbes --verbose --preprocess-modal-operators --formula=../properties/R13.mcf reduced.lts R13.pbes 
+R13	pbesrewr	0	55.67	pbesrewr --verbose --pbes-rewriter=quantifier-one-point R13.pbes R13.one.pbes 
+R13	pbesparelm	0	56.48	pbesparelm --verbose R13.one.pbes R13.optimized.pbes 
+R13	pbessolve	0	77.23	pbessolve --verbose --rewriter=jittyc --solve-strategy=0 R13.optimized.pbes 
+R14	lts2pbes	0	21.18	lts2pbes --verbose --preprocess-modal-operators --formula=../properties/R14.mcf reduced.lts R14.pbes 
+R14	pbesrewr	0	11.13	pbesrewr --verbose --pbes-rewriter=quantifier-one-point R14.pbes R14.one.pbes 
+R14	pbesparelm	0	11.93	pbesparelm --verbose R14.one.pbes R14.optimized.pbes 
+R14	pbessolve	0	21.77	pbessolve --verbose --rewriter=jittyc --solve-strategy=0 R14.optimized.pbes 

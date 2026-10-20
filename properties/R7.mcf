@@ -1,0 +1,65 @@
+% R7: The belt may start or advance only after every station has finished or skipped its work for the current stop, all inner gates are closed, and all pushers are retracted. The belt must eventually advance from each normal servicing stop, unless an emergency interrupts.
+% Scope: six belt positions, two tables, three total orders; atomic events.
+% Revised station-completion clause: not yet model-checked on the full model.
+
+% CHECK: station-completion
+% Check the kitchen and both tables separately; ConveyorStation does not report.
+% Stage 0: no current stop; 1: awaiting this station; 2: station completed.
+% Successful work and a skip both end with StationDone. SendSkip alone is not
+% the completion acknowledgement. Reports outside a current stop are ignored.
+% A new stop clears earlier reports. Emergency/reset cancel the old stop.
+(
+forall st: StationID . (val(st != ConveyorStation) =>
+nu Completion(stage: Nat = 0) .
+(
+    [(exists k, a, b: PlateSlot . (RequestPermission | RoundPermitted | LoadingPosition(k) | ConveyorPosition(Table1, a) | ConveyorPosition(Table2, b)))]
+        Completion(1)
+    && [StationDone(st)] Completion(if(stage == 1, 2, stage))
+    && [StartConveyor] (val(stage == 2) && Completion(stage))
+    && [(exists pos: Position . Advance(pos))]
+        (val(stage == 2) && Completion(0))
+    && [(StartEmergency || (EndEmergency | EmergencyCleared(ConveyorStation) | EmergencyCleared(Kitchen) | EmergencyCleared(TableStation(Table1)) | EmergencyCleared(TableStation(Table2))))]
+        Completion(0)
+    && [!((exists k, a, b: PlateSlot . (RequestPermission | RoundPermitted | LoadingPosition(k) | ConveyorPosition(Table1, a) | ConveyorPosition(Table2, b))) || StationDone(st) || StartConveyor || (exists pos: Position . Advance(pos)) || StartEmergency || (EndEmergency | EmergencyCleared(ConveyorStation) | EmergencyCleared(Kitchen) | EmergencyCleared(TableStation(Table1)) | EmergencyCleared(TableStation(Table2))))]
+        Completion(stage)
+)
+)
+)
+% END CHECK
+&&
+
+% CHECK: initial-closure
+% Initially open inner gates must close before movement.
+(
+forall tbl: TableID .
+[(!CloseInnerGate(tbl))* . (StartConveyor || (exists pos: Position . Advance(pos)))] false
+)
+% END CHECK
+&&
+% CHECK: closed-gates
+% Every later inner opening must be followed by closure before movement.
+(
+forall tbl: TableID .
+[true* . OpenInnerGate(tbl) . (!CloseInnerGate(tbl))* . (StartConveyor || (exists pos: Position . Advance(pos)))] false
+)
+% END CHECK
+&&
+% CHECK: retracted
+% A pusher must retract before belt movement.
+(
+forall tbl: TableID .
+[true* . (exists pl: Plate . (Push(tbl) | BoxFilled(tbl) | PlateTransferred(tbl, pl))) . (!Retract(tbl))* . (StartConveyor || (exists pos: Position . Advance(pos)))] false
+)
+% END CHECK
+&&
+% CHECK: finish-stop
+% On every continuation, the stop reaches advancement or an emergency; deadlock is a failure.
+(
+[true* . (exists k, a, b: PlateSlot . (RequestPermission | RoundPermitted | LoadingPosition(k) | ConveyorPosition(Table1, a) | ConveyorPosition(Table2, b)))]
+mu Finish .
+(
+    <true> true
+    && [!((exists pos: Position . Advance(pos)) || StartEmergency)] Finish
+)
+)
+% END CHECK

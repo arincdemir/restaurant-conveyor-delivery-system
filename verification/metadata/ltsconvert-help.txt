@@ -1,0 +1,67 @@
+Usage: ltsconvert [OPTION]... [INFILE [OUTFILE]]
+Convert the labelled transition system (LTS) from INFILE to OUTFILE in the
+requested format after applying the selected minimisation method (default is
+none). If OUTFILE is not supplied, stdout is used. If INFILE is not supplied,
+stdin is used.
+
+The output format is determined by the extension of OUTFILE, whereas the input
+format is determined by the content of INFILE. Options --in and --out can be
+used to force the input and output formats. The supported formats are:
+  'aut' for the Aldebaran format (CADP),
+  'dot' for the GraphViz format (no longer supported as input format),
+  'fsm' for the Finite State Machine format, or
+  'lts' for the mCRL2 LTS format (default)
+
+Options:
+  -D, --determinise        determinise LTS
+  -eNAME, --equivalence=NAME
+                           generate an equivalent LTS, preserving equivalence 
+                           NAME (use --help-all for all possible arguments): 
+                             'none' identity equivalence (default)
+                             'bisim' default strong bisimilarity (using the O(m 
+                               log n) algorithm [Groote/Jansen 2025])
+                             'branching-bisim' default branching bisimilarity 
+                               (using the O(m log n) algorithm [Groote/Jansen 2025])
+                             'dpbranching-bisim' default divergence-preserving 
+                               branching bisimilarity (using the O(m log n) 
+                               algorithm [Groote/Jansen 2025])
+                             'weak-bisim' weak bisimilarity
+                             'dpweak-bisim' divergence-preserving weak 
+                               bisimilarity
+                             'sim' strong simulation equivalence
+                             'ready-sim' strong ready simulation equivalence
+                             'coupled-sim' coupled simulation equivalence
+                             'trace' strong trace equivalence
+                             'weak-trace' weak trace equivalence
+                             'tau-star' tau star equivalence
+                             'determinisation' determinisation
+                             'tau-scc' contraction of tau-loops
+  -iFORMAT, --in=FORMAT    use FORMAT as the input format.
+  -lFILE, --lps=FILE       use FILE as the LPS from which the input LTS was 
+                           generated; this might be needed to store the correct 
+                           parameter names of states when saving in fsm format 
+                           and to convert non-mCRL2 LTSs to a mCRL2 LTS.
+  -n, --no-state           remove the state information. This can be useful 
+                           when state labels are huge.
+      --no-reach           do not perform a reachability check on the input LTS.
+  -oFORMAT, --out=FORMAT   use FORMAT as the output format.
+      --tau=ACTNAMES       consider actions with a name in the comma separated 
+                           list ACTNAMES to be internal (tau) actions in 
+                           addition to those defined as such by the input.
+      --timings[=FILE]     append timing measurements to FILE. Measurements are 
+                           written to standard error if no FILE is provided
+
+Standard options:
+  -q, --quiet              do not display warning messages
+  -v, --verbose            display short log messages
+  -d, --debug              display detailed log messages
+      --log-level=LEVEL    display log messages up to and including level; 
+                           either warn, verbose, debug or trace
+  -h, --help               display help information
+      --version            display version information
+      --help-all           display help information, including hidden and 
+                           experimental options
+
+Report bugs at <http://www.mcrl2.org/issuetracker>.
+
+See also the manual at <http://www.mcrl2.org/web/user_manual/tools/release/ltsconvert.html>.

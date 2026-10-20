@@ -1,0 +1,19 @@
+{
+  "purpose": "Isolated R12 quantifier diagnostic; not a new restaurant-model verification result.",
+  "states": 3,
+  "transitions": 3,
+  "guarded": {
+    "native_answer": true,
+    "native_wall_seconds": 3.33,
+    "bes_equations": 28,
+    "exit_code": 0
+  },
+  "original": {
+    "native_answer": null,
+    "outcome": "INCONCLUSIVE",
+    "timeout_seconds": 20,
+    "supervisor_elapsed_seconds": 20.259,
+    "exit_code": 124
+  },
+  "interpretation": "The guard alone changes the generated PBES and reproduces the runtime difference on a three-state graph. This strongly implicates the quantification but does not prove nontermination of the original formula."
+}

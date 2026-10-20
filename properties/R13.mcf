@@ -1,0 +1,21 @@
+% R13: Every emergency permits an approved reset. After reset, the belt can advance again without another emergency.
+% Scope: six belt positions, two tables, three total orders; atomic events.
+% Capability: a successful path exists; this does not promise service on every execution.
+% The unchanged formula additionally checks that collection is not required;
+% this is stronger than the revised English requirement.
+
+% CHECK: recover
+% After every request, a complete reset is reachable without customer collection.
+(
+[true* . StartEmergency]
+<(!(exists tbl: TableID . BoxEmptied(tbl)))* . (EndEmergency | EmergencyCleared(ConveyorStation) | EmergencyCleared(Kitchen) | EmergencyCleared(TableStation(Table1)) | EmergencyCleared(TableStation(Table2)))> true
+)
+% END CHECK
+&&
+% CHECK: resume
+% After every reset, normal advancement is reachable without another emergency or collection.
+(
+[true* . (EndEmergency | EmergencyCleared(ConveyorStation) | EmergencyCleared(Kitchen) | EmergencyCleared(TableStation(Table1)) | EmergencyCleared(TableStation(Table2)))]
+<(!(StartEmergency || (exists tbl: TableID . BoxEmptied(tbl))))* . (exists pos: Position . Advance(pos))> true
+)
+% END CHECK

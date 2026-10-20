@@ -1,0 +1,11 @@
+% R9: From an emergency request until reset, belt start or advance, loading, pushing, and inner-gate opening are blocked.
+% Scope: six belt positions, two tables, three total orders; atomic events.
+
+% CHECK: inhibition
+% Forbid these unsafe events after the request until the complete reset.
+(
+[true* . StartEmergency .
+ (!(EndEmergency | EmergencyCleared(ConveyorStation) | EmergencyCleared(Kitchen) | EmergencyCleared(TableStation(Table1)) | EmergencyCleared(TableStation(Table2))))* .
+ (StartConveyor || (exists pos: Position . Advance(pos)) || (exists oid: OrderID, pl: Plate . (LoadPlate(oid) | PlateLoaded(pl))) || (exists tbl: TableID, pl: Plate . (Push(tbl) | BoxFilled(tbl) | PlateTransferred(tbl, pl))) || (exists tbl: TableID . OpenInnerGate(tbl)))] false
+)
+% END CHECK

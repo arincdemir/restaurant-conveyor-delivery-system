@@ -1,0 +1,4 @@
+Generated 25 new internal processes. If linearisation does not terminate, the use of the flag `--lin-method=regular2' or `--lin-method=stack' in mcrl22lps can help.
+real 0.12
+user 0.12
+sys 0.00

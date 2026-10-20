@@ -1,0 +1,9 @@
+Number of states: 5915640.
+Number of action labels: 140 (including a tau label).
+Number of transitions: 17854674.
+Number of state labels: 5915640.
+LTS is deterministic.
+This lts has no probabilistic states.
+real 17.11
+user 16.76
+sys 0.33

@@ -1,0 +1,14 @@
+Guessing input format: PBES in internal format
+Using optimisation 2
+Generating parity game...
+using '/Applications/mCRL2.app/Contents/bin/mcrl2compilerewriter' to compile rewriter.
+generated ./jittyc_2910_90356672_4075570546.cpp in 5ms, compiling...
+compiled in 2972ms, loading rewriter...
+rewriter loaded successfully.
+Generated 28 BES equations
+Solving parity game...
+true
+real 3.33
+user 2.77
+sys 0.12
+Supervisor elapsed 3.440 s; child wait status 0

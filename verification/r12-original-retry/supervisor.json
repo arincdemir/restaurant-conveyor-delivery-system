@@ -1,0 +1,14 @@
+{
+   "active_stage_at_stop" : "R12 pbessolve\n",
+   "child_wait_status" : 15,
+   "deadline_utc" : "2026-10-19T20:08:54Z",
+   "finished_utc" : "2026-10-19T20:08:56Z",
+   "interrupted" : false,
+   "note" : "Process supervision only; PASS/FAIL require the completed native solver answer.",
+   "outcome" : "INCONCLUSIVE",
+   "started_utc" : "2026-10-19T18:38:54Z",
+   "timed_out" : true,
+   "total_wall_seconds" : 5402.298,
+   "wall_limit_seconds" : 5400,
+   "working_directory" : "/Users/arinc/Projects/2IMF30-System-Validation/restaurant-conveyor-delivery-system/verification-R12-original-retry-20261019T183811Z/run"
+}

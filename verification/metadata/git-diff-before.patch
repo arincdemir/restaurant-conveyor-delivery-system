@@ -1,0 +1,423 @@
+diff --git a/properties/CATALOG.md b/properties/CATALOG.md
+index 94106fd..ff31018 100644
+--- a/properties/CATALOG.md
++++ b/properties/CATALOG.md
+@@ -1,53 +1,40 @@
+-# Property catalog
+-
+-Expressive versions use descriptive monitors and comments. Short versions use
+-compact layout or equivalent action-history rules. Both preserve the documented
+-guarantee on the current six-slot, three-order model. The earlier short F7
+-collection variant uses verified finite-order facts; see README.md.
+-Line counts include comments.
+-
+-The table records complete checks before the direct-emergency refactor
+-(2026-10-17, source `9fe01eda6fbc8e5953e11a4b476321ba7d001984b98d9c4e86b5845b81ab89ee`).
+-S8 has since been updated to allow emergency cancellation of an unfinished round.
+-See [the refactor's verification notes](../../output/verification/direct-emergency-2026-10-18/verification-notes.md)
+-for the checks rerun on the new source. “False” means a requirement does not hold;
+-a non-parseable formula is not counted as false.
+-
+-| Requirement | Expressive version | Short version | Result |
+-| --- | --- | --- | --- |
+-| S1 | [16 lines](S1_gateInterlock.mcf) | [7 lines](S1_gateInterlock_short.mcf) | true |
+-| S2 | [6 lines](S2_correctDestination.mcf) | [3 lines](S2_correctDestination_short.mcf) | true |
+-| S3 | [10 lines](S3_noTransferIntoOccupiedBox.mcf) | [4 lines](S3_noTransferIntoOccupiedBox_short.mcf) | true |
+-| S4 | [36 lines](S4_safePusherOperation.mcf) | [28 lines](S4_safePusherOperation_short.mcf) | true |
+-| S5 | [14 lines](S5_safeConveyorAdvance.mcf) | [8 lines](S5_safeConveyorAdvance_short.mcf) | true |
+-| S6 | [17 lines](S6_noOccupiedSlotOverwrite.mcf) | [14 lines](S6_noOccupiedSlotOverwrite_short.mcf) | true |
+-| S7 | [12 lines](S7_atMostOnceDelivery.mcf) | [10 lines](S7_atMostOnceDelivery_short.mcf) | true |
+-| S8 | [30 lines](S8_oneReportPerRound.mcf) | [20 lines](S8_oneReportPerRound_short.mcf) | true |
+-| S9 | [31 lines](S9_roundAndMechanicalBarrier.mcf) | [26 lines](S9_roundAndMechanicalBarrier_short.mcf) | true |
+-| S10 | [16 lines](S10_noUnsafeActionsDuringEmergency.mcf) | [8 lines](S10_noUnsafeActionsDuringEmergency_short.mcf) | true |
+-| S11 | [16 lines](S11_emergencyGateInterlock.mcf) | [8 lines](S11_emergencyGateInterlock_short.mcf) | true |
+-| S12 | [43 lines](S12_noAutomaticResume.mcf) | [24 lines](S12_noAutomaticResume_short.mcf) | true |
+-| F1 | [15 lines](F1_acceptedOrderCanLoad.mcf) | [9 lines](F1_acceptedOrderCanLoad_short.mcf) | true |
+-| F2 | [21 lines](F2_alignedPlateCanDeliver.mcf) | [17 lines](F2_alignedPlateCanDeliver_short.mcf) | true |
+-| F3 | [22 lines](F3_occupiedBoxSkipsAndCanAdvance.mcf) | [14 lines](F3_occupiedBoxSkipsAndCanAdvance_short.mcf) | true |
+-| F4 (joint event) | [34 lines](F4_simultaneousTableTransfers.mcf) | [29 lines](F4_simultaneousTableTransfers_short.mcf) | false |
+-| F5 | [11 lines](F5_innerClosesBeforeOuterOpens.mcf) | [4 lines](F5_innerClosesBeforeOuterOpens_short.mcf) | true |
+-| F6 | [15 lines](F6_collectionClosesOuterGate.mcf) | [9 lines](F6_collectionClosesOuterGate_short.mcf) | true |
+-| F7 | [46 lines](F7_eventualDelivery.mcf) | [23 lines](F7_eventualDelivery_short.mcf) | false |
+-| F7 + collection | [69 lines](F7_eventualDeliveryWithCollection.mcf) | [23 lines](F7_eventualDeliveryWithCollection_short.mcf) | true |
+-| F8 | [8 lines](F8_deadlockFree.mcf) | [2 lines](F8_deadlockFree_short.mcf) | true |
+-| F9 | [8 lines](F9_resumeAfterReset.mcf) | [4 lines](F9_resumeAfterReset_short.mcf) | true |
+-
+-F4 selects the strict simultaneous-transfer interpretation of “concurrent.” Its failure reflects the
+-current sequential conveyor updates and allow policy; it is not a syntax error.
+-The native model permits both transfer orders during one stopped round.
+-F7 as written fails because a different plate can take a briefly available box.
+-
+-See [REQUIREMENTS_REVIEW.md](REQUIREMENTS_REVIEW.md) for interpretations, suggested
+-wording, overlaps, and additional requirements worth discussing. Safety checks
+-need not require eventual service; capability checks (`can`) need not require
+-service on every execution. F5 checks ordering, while F6 checks eventual closure.
+-
+-Shorter formulas are not automatically faster. The earlier short S11/F7 variants
+-generate more checking equations than their expressive versions. Run large
+-progress checks sequentially to avoid memory pressure.
++# Current compact R property catalog
++
++Only R1–R14 are registered in the project. This catalog follows the current English requirements in the report and requirements.json. Experimental R1–R22 and historical S/F files remain references.
++
++**Revised R7 has not been verified on the complete model.** Its formula passes a native syntax check, and the new station-completion clause passes nine focused examples. R8 and R12 still have inconclusive full-model checks. The all-pass acceptance criterion remains unmet.
++
++For every property except R7, the mathematical formula is unchanged from the recorded run (compared after removing comments and whitespace). R3 and R10 only have revised English comments. R13 retains its stronger formula that also excludes dependence on customer collection. Their historical Boolean results therefore concern the same mathematical formulas; no new full-model run is claimed.
++
++The recorded seconds exclude the original complete-graph generation and are not GUI verification timings. They include per-property work and incomplete attempts from the earlier cached-graph run. No earlier R7 timing or result is attributed to its revised formula.
++
++| Property | Current requirement | Full-model status | Recorded check seconds |
++| --- | --- | --- | ---: |
++| [R1](R1.mcf) | A box's two gates must never be open together. | [PASS](../../output/verification/compact-r-suite-20261019T121007Z/R1/result.json) | 52.92 |
++| [R2](R2.mcf) | A plate may be delivered only to the table named on its tag. | [PASS](../../output/verification/compact-r-suite-20261019T121007Z/R2/result.json) | 14.99 |
++| [R3](R3.mcf) | Each order may be loaded at most once and delivered at most once. | [PASS](../../output/verification/compact-r-suite-20261019T121007Z/R3/result.json) | 32.12 |
++| [R4](R4.mcf) | The kitchen may load only into an empty loading position while the belt is stopped. | [PASS](../../output/verification/compact-r-suite-20261019T121007Z/R4/result.json) | 131.02 |
++| [R5](R5.mcf) | A plate may enter only an empty delivery box. | [PASS](../../output/verification/compact-r-suite-20261019T121007Z/R5/result.json) | 22.23 |
++| [R6](R6.mcf) | A pusher may start only with the correct plate aligned, the belt stopped, the inner gate open, and the outer gate closed. It must retract before the inner gate closes. | [PASS](../../output/verification/compact-r-suite-20261019T121007Z/R6/result.json) | 280.57 |
++| [R7](R7.mcf) | The belt may start or advance only after every station has finished or skipped its work for the current stop, all inner gates are closed, and all pushers are retracted. The belt must eventually advance from each normal servicing stop, unless an emergency interrupts. | NOT CHECKED (revised) | — |
++| [R8](R8.mcf) | Customers may collect only from an occupied box with its outer gate open and its inner gate closed. | [INCONCLUSIVE](../../output/verification/compact-r-suite-20261019T121007Z/R8/result.json) | 120.01 |
++| [R9](R9.mcf) | From an emergency request until reset, belt start or advance, loading, pushing, and inner-gate opening are blocked. | [PASS](../../output/verification/compact-r-suite-20261019T121007Z/R9/result.json) | 76.31 |
++| [R10](R10.mcf) | Reset requires all controllers to have received the current emergency notification and the operator to have cleared that emergency. | [PASS](../../output/verification/compact-r-suite-20261019T121007Z/R10/result.json) | 13.70 |
++| [R11](R11.mcf) | Every accepted order can be prepared and loaded during normal operation, without requiring an emergency. | [PASS](../../output/verification/compact-r-suite-20261019T121007Z/R11/result.json) | 17.41 |
++| [R12](R12.mcf) | Every loaded plate can reach its tagged box without requiring an emergency. After delivery, collection must remain possible. | [INCONCLUSIVE](../../output/verification/compact-r-suite-20261019T121007Z/R12/result.json) | 120.00 |
++| [R13](R13.mcf) | Every emergency permits an approved reset. After reset, the belt can advance again without another emergency. | [PASS](../../output/verification/compact-r-suite-20261019T121007Z/R13/result.json) | 47.32 |
++| [R14](R14.mcf) | Every reachable state must have a possible action. Waiting for a customer or operator is allowed if they can still act. | [PASS](../../output/verification/compact-r-suite-20261019T121007Z/R14/result.json) | 9.62 |
++
++## R7 station-completion interpretation
++
++The kitchen and both table stations must each send StationDone for the current servicing stop before the belt starts or advances. Both successful work and a skip end with that acknowledgement; SendSkip alone does not release the belt.
++
++A three-state monitor is checked separately for each reporting station: 0 means no current stop, 1 means awaiting completion, and 2 means completed. A fresh round clears old reports. An emergency request, reset or completed advance cancels the old stop. The conveyor controller itself is not a reporting station. Gate, pusher and eventual-advancement checks remain separate conjuncts.
++
++This is a completion barrier, not a full audit of every skip decision or duplicate report. The existing universal normal-stop progress clause is retained.
++
++[Native syntax and focused-test evidence](../../output/verification/r7-revision-20261019140812Z/README.md). [Formula revision comparison](../../output/verification/r7-revision-20261019140812Z/revision.json).
++
++[Previous R7 result, for the old formula only](../../output/verification/compact-r-suite-20261019T121007Z/R7/result.json). [Historical full-run summary](../../output/verification/compact-r-suite-20261019T121007Z/SUMMARY.md).
++
++[SEMANTICS.md](SEMANTICS.md) explains the formulas. [NATIVE_VERIFICATION.md](NATIVE_VERIFICATION.md) gives commands using only the mCRL2 toolset. The additional conditional eventual-delivery draft remains unregistered and unchecked.
+diff --git a/properties/README.md b/properties/README.md
+index 3baa7ff..7110311 100644
+--- a/properties/README.md
++++ b/properties/README.md
+@@ -1,129 +1,125 @@
+-# Emergency and delivery properties
+-
+-These properties use the S1–S12 / F1–F9 numbering from the requirements. They
+-observe the complete system's actions. The model and its behaviour are unchanged
+-by adding the formulas.
+-
+-The complete set is listed in [CATALOG.md](CATALOG.md), with links to expressive
+-and short versions. [REQUIREMENTS_REVIEW.md](REQUIREMENTS_REVIEW.md) gives concise
+-wording for every requirement, explains overlaps and limitations, and suggests
+-useful additions. The sections below document the original emergency/F7 group.
+-
+-Results for that group before the direct-emergency refactor (2026-10-17):
+-
+-| Check | Result |
+-| --- | --- |
+-| S10 | true |
+-| S11 | true |
+-| S12 | true |
+-| F7 as written | false |
+-| F7 with the additional collection assumption | true |
+-| F9 | true |
+-
+-| File | Meaning |
+-| --- | --- |
+-| `S10_noUnsafeActionsDuringEmergency.mcf` | Between `StartEmergency` and the complete synchronized reset, forbid loading, pushing, inner-gate opening, advancement and conveyor start. |
+-| `S11_emergencyGateInterlock.mcf` | Opening either gate requires its paired gate to be closed. This checks the interlock throughout operation, including emergency release. |
+-| `S12_noAutomaticResume.mcf` | Recovery requires emergency notification, explicit operator clearance and synchronized reset. Normal admission, servicing and unsafe operations remain inhibited until reset. |
+-| `F7_eventualDelivery.mcf` | On every execution where the belt advances infinitely often and a loaded plate's destination box is available at least once afterwards, that plate is eventually delivered. |
+-| `F7_eventualDeliveryWithCollection.mcf` | The same F7 requirement, with the additional assumption that every plate occupying the destination box is eventually collected. |
+-| `F9_resumeAfterReset.mcf` | After every synchronized reset, conveyor advancement remains possible. This existing formula is unchanged. |
+-
+-## Important interpretations
+-
+-- The emergency interval begins at `StartEmergency`, before the deferred
+-  `EmergencyReceived` broadcast.
+-- Controllers now receive that broadcast directly before blocked unsafe actions.
+-  Notification cancels the unfinished servicing round; reset begins a fresh round.
+-  Already-started transfers finish retracting, closing their inner gate, and
+-  reporting before notification. Prepared food is retained. The S8 formulas
+-  permit emergency cancellation while still requiring every reply before advance.
+-- The refactor's checks are recorded in
+-  [the verification notes](../../output/verification/direct-emergency-2026-10-18/verification-notes.md).
+-- A reset is the single multi-action containing `EndEmergency` and all four
+-  `EmergencyCleared` results. S12 also checks the preceding notification and
+-  `OperatorClearEmergency`. Normal operation may resume after that reset;
+-  there is no separate manual start button in this model.
+-- Loading is observed as `LoadPlate | PlateLoaded`; delivery is observed as
+-  `Push | BoxFilled | PlateTransferred`, with matching order and table data.
+-- The gate formulas start with the model's initial inner-open, outer-closed
+-  state. F7 starts with empty boxes and closed outer gates.
+-- An available box is empty with its outer gate closed. F7 permits this
+-  condition to hold already when loading occurs.
+-- Both F7 versions check universal eventual delivery under their assumptions.
+-  They do not merely check whether some successful delivery path exists.
+-- Infinite advancement and the other F7 assumptions must hold on the same
+-  execution. The formulas do not introduce fairness into the model itself.
+-- In the stronger F7 version, every blocking plate being eventually collected
+-  means that the box is empty infinitely often along an infinite execution.
+-  A box that stays empty satisfies this condition. It does **not** require
+-  infinitely many collection actions, which would be impossible with three
+-  total orders.
+-
+-## Why F7 as written can fail
+-
+-All three orders can target Table 1 and load in the order 0, 2, 1. Order 0 is
+-delivered and collected, making the box available after order 1 was loaded.
+-Order 2 then reaches the box first and is never collected. Order 1 can keep
+-circulating while the belt keeps advancing.
+-
+-This meets the original F7 assumptions but prevents order 1's delivery. The
+-additional collection assumption excludes this execution because order 2
+-remains in the box forever.
+-
+-## Shorter alternatives
+-
+-Each formula also has a separately registered `_short.mcf` version. The original
+-files remain unchanged. The line counts below include explanatory comments.
+-
+-| Property | Original lines | Short version lines | How it is shorter |
+-| --- | ---: | ---: | --- |
+-| S10 | 16 | 8 | Same formula, more compact layout. |
+-| S11 | 16 | 8 | Rules forbidding one gate opening before the other closes. |
+-| S12 | 43 | 24 | Four recovery stages replace three Boolean flags. |
+-| F7 as written | 46 | 23 | Action histories identify when a box is available. |
+-| F7 with collection | 69 | 23 | Available opportunities must eventually serve a plate; the finite number of plates makes repeated opportunities sufficient. |
+-| F9 | 8 | 4 | Same formula, more compact layout. |
+-
+-The shorter versions retain the original meanings on the current model. Both
+-short F7 formulas still check **every execution satisfying the assumptions**;
+-they do not replace eventual delivery with the possibility of delivery.
+-
+-Short F7 uses two facts checked separately on the complete model:
+-`CloseOuterGate` happens only with an empty box, and `BoxEmptied` happens only
+-with the outer gate open. These let the formula recognize availability from
+-action histories instead of tracking the box with Boolean parameters.
+-
+-The short collection version additionally relies on the current finite order
+-bound and each order being transferred at most once. Other plates can consume
+-only finitely many available opportunities. If they are all eventually collected
+-and advancement continues, the target plate must eventually get an opportunity
+-that no other plate takes. Continued advancement also forces an open outer gate
+-to close after collection; this was checked separately.
+-
+-These are properties of the current model, not extra assumptions about its
+-environment. Use the full collection formula, or recheck the simplification, if
+-the model later admits an unbounded stream of orders or repeated transfers.
+-The short versions have the same verification results shown above.
+-Fewer lines do not necessarily make verification faster: the short S11 and F7
+-formulas generate more checking equations than the original versions. The
+-originals remain useful for routine verification.
+-
+-## Running the checks
+-
+-All 44 formulas are registered in the project, including both F7 interpretations
+-and their short alternatives. Reload the project if it was
+-already open in the IDE, then select the property to verify. The existing
+-compiled-rewriter and enumeration-limit settings are preserved.
+-
+-For command-line checking, translate a formula with `lps2pbes`, apply one-point
+-rewriting with `pbesrewr --pbes-rewriter=quantifier-one-point`, eliminate unused
+-parameters with `pbesparelm`, and solve with:
++# Compact R1–R14 suite
++
++These files implement the current report requirements. Only R1–R14 are registered
++in the project. The model is unchanged. R3 and R11 are optional scope additions;
++they are retained only if their complete checks pass within the agreed budget.
++
++- [CATALOG.md](CATALOG.md) maps requirements to formulas and final results.
++- [SEMANTICS.md](SEMANTICS.md) explains the few formula patterns and assumptions.
++- [drafts/README.md](drafts/README.md) describes an additional, unchecked
++  eventual-delivery property under no-emergency and eventual-collection assumptions.
++- [archive/r1-r22-draft](archive/r1-r22-draft) preserves the experimental suite.
++  Its numbering, claims and results are not the current contract.
++- Existing S/F files and REQUIREMENTS_REVIEW.md are historical references.
++
++## Reproduce
++
++Use [NATIVE_VERIFICATION.md](NATIVE_VERIFICATION.md) for the report and for
++verification with the provided mCRL2 tools alone. It gives the complete native
++commands and a GUI-only alternative. The Python commands below are optional
++automation of native tools, not a prerequisite or a replacement proof method.
++
++Run from this project directory with the mCRL2 tools on PATH:
++
++To check just R1, using the same cached-graph workflow as the recorded run:
++
++```sh
++export PATH="/Applications/mCRL2.app/Contents/bin:$PATH"
++python3 scripts/verify_requirements.py --only R1
++```
++
++The runner creates a fresh timestamped directory under `output/verification` and
++prints each clause's result, followed by R1's overall result. R1 passes only when
++all three clauses return true. Use `--only R1 R2` for several selected properties;
++omit `--only` for all fourteen. The summarizer below requires a full-suite run.
++
++**The reported timings are not GUI Verify timings.** For example, R1's 52.918
++seconds covered its three clause checks, including their projections and solves,
++after shared setup. It excluded the earlier generation of the complete cached
++state graph. Each clause hides irrelevant action labels and applies strong
++bisimulation reduction before `lts2pbes`, PBES simplification and solving.
++The normal IDE verification uses the LPS/PBES route and checks the whole formula;
++it does not automatically use these cached projections or split our CHECK blocks.
++The same mathematical property can therefore take substantially longer in the
++GUI. A three-minute run is not contradicted by the recorded 52.918-second result.
++
++In the IDE, inspect the bottom console for the active tool and command. The
++Options menu can retain intermediate files in the project. The project already
++enables `jittyc` and uses regular linearisation. Those settings alone do not
++reproduce the cached-graph workflow. If using the GUI, the three R1 CHECK blocks
++can also be added as separate temporary properties: each block is closed, and
++R1 holds exactly when all three hold. Runtime with that route is not measured.
++
++The cache is local to this workspace and is accepted only after source and graph
++provenance validation. If the model changes, an old graph must not be reused.
++`--no-cache` explores a fresh complete graph and can be much slower, or exceed
++the default overall budget. The single-property command is documented here; it
++has not been rerun merely to answer the GUI timing question.
++
++For the full verification workflow:
++
++```sh
++python3 scripts/verify_requirements.py --output RUN_DIRECTORY
++# For this run the user approved one finishing pass inside the original 1200s:
++python3 scripts/finish_requirement_checks.py --output RUN_DIRECTORY --approved-finishing-pass
++python3 scripts/test_requirement_properties.py --output RUN_DIRECTORY
++python3 scripts/summarize_requirement_results.py --output RUN_DIRECTORY
++```
++
++The runner allows **120 seconds per whole requirement**, including its clauses
++and one alternative backend, and **1200 seconds for the batch**. Its first
++backend gets at most 90 seconds per requirement; the remaining time can be used
++for a symbolic LPS retry. The fixtures also respect the original batch deadline.
++Timeouts and tool errors are INCONCLUSIVE. Only a complete false Boolean answer
++is FAIL, and only complete true answers for every clause give PASS.
++
++For the recorded run, the user explicitly allowed **one finishing pass** on
++unfinished clauses, relaxing the per-requirement limit while retaining the
++original twenty-minute overall deadline. The finishing script resumes only
++completed native intermediates and records a new solve attempt. Original
++timeouts remain visible. It can resume an interrupted pass, but cannot start a second completed pass or extend the overall deadline.
++Reported property timings include both passes.
++
++Every run uses a fresh LPS and fresh property answers. A complete graph cache is
++reused only after checking the source and graph provenance. `--no-cache` generates
++a fresh graph instead, within the same batch budget. The scripts do not run the
++archived C++ auditor or the former fairness/storage workflow.
++
++## Native commands
++
++Each file is a conjunction of closed clauses marked `CHECK` in comments. These
++comments do not affect its ordinary mCRL2 meaning. The runner syntax-checks the
++whole file, extracts those same conjuncts, and proves them separately. A
++conjunction holds exactly when all its conjuncts hold. This keeps unrelated
++checks small and lets each clause be explained by itself.
++
++For a symbolic LPS check the native pipeline is:
+ 
+ ```sh
+-pbessolve --rewriter=jittyc --qlimit=10 --search-strategy=depth-first --solve-strategy=4 property-fast.pbes
++mcrl22lps --lin-method=regular MODEL.mcrl2 raw.lps
++lpsconstelm raw.lps const.lps
++lpssumelm const.lps model.lps
++lps2pbes --preprocess-modal-operators --formula=CLAUSE.mcf model.lps raw.pbes
++pbesrewr --pbes-rewriter=quantifier-one-point raw.pbes one.pbes
++pbesparelm one.pbes optimized.pbes
++pbessolve --rewriter=jittyc --qlimit=10 --search-strategy=depth-first --solve-strategy=4 optimized.pbes
+ ```
+ 
+-The progress formulas can take longer than safety checks. A `false` result for
+-the original F7 is a requirement counterexample, rather than a compilation
+-failure.
++The cached-graph backend uses `ltsconvert` to hide only unmentioned **whole**
++multi-actions, reduces with strong bisimulation, and translates using
++`lts2pbes --preprocess-modal-operators`. Tau transitions and divergence remain;
++there is no weak reduction or fairness assumption. Each projection's action set,
++graph hash, and exact commands are recorded in the run directory.
++
++Formula snapshots, hashes, logs, backend attempts, timings and per-clause native
++answers are saved with `results.json`. Large intermediate PBES files are removed
++after a complete answer and can be regenerated from those commands. Earlier
++Boolean results are never imported into a new run.
++
++The earlier recorded run ended at the overall deadline with 11 PASS and 3
++INCONCLUSIVE (the old R7, R8 and R12). Fixture validation also remained incomplete.
++R7 has since gained a current-stop station-completion clause. Its revised formula
++passes native syntax checking and twelve focused examples (nine for the new
++clause and three for the whole conjunction), but has **not** been verified on the
++complete model. Its previous status and timing do not apply to the revised file.
++The all-pass acceptance criterion has **not** been met. See CATALOG.md.
+diff --git a/restaurant-conveyor-delivery-system.mcrl2proj b/restaurant-conveyor-delivery-system.mcrl2proj
+index 24af55d..baf30a1 100644
+--- a/restaurant-conveyor-delivery-system.mcrl2proj
++++ b/restaurant-conveyor-delivery-system.mcrl2proj
+@@ -1,51 +1,20 @@
+ <root>
+  <spec>restaurant-conveyor-delivery-system_spec.mcrl2</spec>
+  <properties>
+-  <property>exampleProperty</property>
+-  <property>S10_noUnsafeActionsDuringEmergency</property>
+-  <property>S11_emergencyGateInterlock</property>
+-  <property>S12_noAutomaticResume</property>
+-  <property>F7_eventualDelivery</property>
+-  <property>F7_eventualDeliveryWithCollection</property>
+-  <property>F9_resumeAfterReset</property>
+-  <property>S10_noUnsafeActionsDuringEmergency_short</property>
+-  <property>S11_emergencyGateInterlock_short</property>
+-  <property>S12_noAutomaticResume_short</property>
+-  <property>F7_eventualDelivery_short</property>
+-  <property>F7_eventualDeliveryWithCollection_short</property>
+-  <property>F9_resumeAfterReset_short</property>
+-  <property>S1_gateInterlock</property>
+-  <property>S1_gateInterlock_short</property>
+-  <property>S2_correctDestination</property>
+-  <property>S2_correctDestination_short</property>
+-  <property>S3_noTransferIntoOccupiedBox</property>
+-  <property>S3_noTransferIntoOccupiedBox_short</property>
+-  <property>S4_safePusherOperation</property>
+-  <property>S4_safePusherOperation_short</property>
+-  <property>S5_safeConveyorAdvance</property>
+-  <property>S5_safeConveyorAdvance_short</property>
+-  <property>S6_noOccupiedSlotOverwrite</property>
+-  <property>S6_noOccupiedSlotOverwrite_short</property>
+-  <property>S7_atMostOnceDelivery</property>
+-  <property>S7_atMostOnceDelivery_short</property>
+-  <property>S8_oneReportPerRound</property>
+-  <property>S8_oneReportPerRound_short</property>
+-  <property>S9_roundAndMechanicalBarrier</property>
+-  <property>S9_roundAndMechanicalBarrier_short</property>
+-  <property>F1_acceptedOrderCanLoad</property>
+-  <property>F1_acceptedOrderCanLoad_short</property>
+-  <property>F2_alignedPlateCanDeliver</property>
+-  <property>F2_alignedPlateCanDeliver_short</property>
+-  <property>F3_occupiedBoxSkipsAndCanAdvance</property>
+-  <property>F3_occupiedBoxSkipsAndCanAdvance_short</property>
+-  <property>F4_simultaneousTableTransfers</property>
+-  <property>F4_simultaneousTableTransfers_short</property>
+-  <property>F5_innerClosesBeforeOuterOpens</property>
+-  <property>F5_innerClosesBeforeOuterOpens_short</property>
+-  <property>F6_collectionClosesOuterGate</property>
+-  <property>F6_collectionClosesOuterGate_short</property>
+-  <property>F8_deadlockFree</property>
+-  <property>F8_deadlockFree_short</property>
++  <property>R1</property>
++  <property>R2</property>
++  <property>R3</property>
++  <property>R4</property>
++  <property>R5</property>
++  <property>R6</property>
++  <property>R7</property>
++  <property>R8</property>
++  <property>R9</property>
++  <property>R10</property>
++  <property>R11</property>
++  <property>R12</property>
++  <property>R13</property>
++  <property>R14</property>
+  </properties>
+  <jittyc>true</jittyc>
+  <linearisation_method>regular</linearisation_method>

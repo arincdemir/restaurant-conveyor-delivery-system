@@ -1,0 +1,19 @@
+% R11: Every accepted order can be prepared and loaded during normal operation, without requiring an emergency.
+% Scope: six belt positions, two tables, three total orders; atomic events.
+% Capability: a successful path exists; this does not promise service on every execution.
+
+% CHECK: load-capability
+% AcceptOrder hides its ID; nextID counts acceptances from zero. The diamond asks for one normal preparation/loading path.
+(
+nu Orders(nextID: OrderID = 0) .
+(
+    forall meal: Meal, tbl: TableID . [AcceptOrder(meal, tbl)]
+    (
+        <(!StartEmergency)* . AddPlate(nextID, tbl) .
+         (!StartEmergency)* . (LoadPlate(nextID) | PlateLoaded(plate(nextID, tbl)))> true
+        && Orders(nextID + 1)
+    )
+    && [!(exists meal: Meal, tbl: TableID . AcceptOrder(meal, tbl))] Orders(nextID)
+)
+)
+% END CHECK

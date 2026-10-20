@@ -1,0 +1,9 @@
+Guessing output format: PBES in internal format
+Guessing input format: PBES in internal format
+pbesparelm parameters:
+  input file:         guarded.one.pbes
+  output file:        guarded.optimized.pbes
+Loading PBES in pbes format...
+
+removing the following parameters:
+Saving result in pbes format...

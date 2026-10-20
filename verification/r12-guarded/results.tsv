@@ -1,0 +1,2 @@
+requirement	outcome	total_seconds	evidence
+R12	PASS	492.164	logs/R12.*.log

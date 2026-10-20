@@ -1,6 +1,0 @@
-% S2: each atomic transfer must go to the destination encoded on its plate.
-% This does not by itself prove that the tag matches the accepted order.
-[true*]
-forall tbl: TableID, pl: Plate .
-    [(Push(tbl) | BoxFilled(tbl) | PlateTransferred(tbl, pl))]
-        val(tbl == t_id(pl))

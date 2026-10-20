@@ -1,0 +1,4 @@
+lts2pbes --verbose --preprocess-modal-operators --formula=../properties/R12.mcf reduced.lts R12.pbes 
+pbesrewr --verbose --pbes-rewriter=quantifier-one-point R12.pbes R12.one.pbes 
+pbesparelm --verbose R12.one.pbes R12.optimized.pbes 
+pbessolve --verbose --rewriter=jittyc --solve-strategy=0 R12.optimized.pbes 

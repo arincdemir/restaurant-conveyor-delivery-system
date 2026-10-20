@@ -1,0 +1,46 @@
+sort OrderID = Nat;
+     TableID = struct Table1 | Table2;
+     Plate = struct plate(o_id: OrderID, t_id: TableID);
+
+map  maxOrders: Nat;
+
+eqn  maxOrders  =  3;
+
+pbes nu X'0 =
+       (forall oid1: Nat, tbl1: TableID. Z0'0(oid1, tbl1)) && (forall tbl1: TableID. Y1'0(tbl1));
+     nu X'1 =
+       (forall oid1: Nat, tbl1: TableID. Z0'1(oid1, tbl1)) && (forall tbl1: TableID. Y1'1(tbl1));
+     nu X'2 =
+       (forall oid1: Nat, tbl1: TableID. Z0'2(oid1, tbl1)) && (forall tbl1: TableID. Y1'2(tbl1));
+     nu Z0'0(oid1: Nat, tbl1: TableID) =
+       (val((0 == oid1 && Table1 == tbl1) && 0 == oid1) => X1'1(oid1, tbl1)) && Z0'1(oid1, tbl1);
+     nu Z0'1(oid1: Nat, tbl1: TableID) =
+       Z0'2(oid1, tbl1);
+     nu Z0'2(oid1: Nat, tbl1: TableID) =
+       Z0'0(oid1, tbl1);
+     mu X1'0(oid1: Nat, tbl1: TableID) =
+       X1'1(oid1, tbl1);
+     mu X1'1(oid1: Nat, tbl1: TableID) =
+       val(((Table1 == tbl1 && 0 == oid1 && Table1 == tbl1) && Table1 == tbl1) && Table1 == tbl1) || X1'2(oid1, tbl1);
+     mu X1'2(oid1: Nat, tbl1: TableID) =
+       X1'0(oid1, tbl1);
+     nu Y1'0(tbl1: TableID) =
+       Y1'1(tbl1);
+     nu Y1'1(tbl1: TableID) =
+       (val((Table1 == tbl1 && Table1 == tbl1) && Table1 == tbl1) => Z1'2(tbl1)) && Y1'2(tbl1);
+     nu Y1'2(tbl1: TableID) =
+       Y1'0(tbl1);
+     nu Z1'0(tbl1: TableID) =
+       X2'0(tbl1) && Z1'1(tbl1);
+     nu Z1'1(tbl1: TableID) =
+       X2'1(tbl1) && Z1'2(tbl1);
+     nu Z1'2(tbl1: TableID) =
+       X2'2(tbl1) && (val(!(Table1 == tbl1)) => Z1'0(tbl1));
+     mu X2'0(tbl1: TableID) =
+       X2'1(tbl1);
+     mu X2'1(tbl1: TableID) =
+       X2'2(tbl1);
+     mu X2'2(tbl1: TableID) =
+       val(Table1 == tbl1) || X2'0(tbl1);
+
+init X'0;

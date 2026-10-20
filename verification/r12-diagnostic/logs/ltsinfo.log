@@ -1,0 +1,6 @@
+Number of states: 3.
+Number of action labels: 4 (including a tau label).
+Number of transitions: 3.
+Number of state labels: 3.
+LTS is deterministic.
+This lts has no probabilistic states.

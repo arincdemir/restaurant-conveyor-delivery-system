@@ -1,0 +1,16 @@
+{
+  "R1": "A box's two gates must never be open together.",
+  "R2": "A plate may be delivered only to the table named on its tag.",
+  "R3": "Each order may be loaded at most once and delivered at most once.",
+  "R4": "The kitchen may load only into an empty loading position while the belt is stopped.",
+  "R5": "A plate may enter only an empty delivery box.",
+  "R6": "A pusher may start only with the correct plate aligned, the belt stopped, the inner gate open, and the outer gate closed. It must retract before the inner gate closes.",
+  "R7": "The belt may start or advance only after every station has finished or skipped its work for the current stop, all inner gates are closed, and all pushers are retracted. The belt must eventually advance from each normal servicing stop, unless an emergency interrupts.",
+  "R8": "Customers may collect only from an occupied box with its outer gate open and its inner gate closed.",
+  "R9": "From an emergency request until reset, belt start or advance, loading, pushing, and inner-gate opening are blocked.",
+  "R10": "Reset requires all controllers to have received the current emergency notification and the operator to have cleared that emergency.",
+  "R11": "Every accepted order can be prepared and loaded during normal operation, without requiring an emergency.",
+  "R12": "Every loaded plate can reach its tagged box without requiring an emergency. After delivery, collection must remain possible.",
+  "R13": "Every emergency permits an approved reset. After reset, the belt can advance again without another emergency.",
+  "R14": "Every reachable state must have a possible action. Waiting for a customer or operator is allowed if they can still act."
+}

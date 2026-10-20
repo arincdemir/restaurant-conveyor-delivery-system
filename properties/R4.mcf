@@ -1,0 +1,22 @@
+% R4: The kitchen may load only into an empty loading position while the belt is stopped.
+% Scope: six belt positions, two tables, three total orders; atomic events.
+
+% CHECK: empty-confirmation
+% Remember only the loading-slot check for this stop; loading consumes that confirmation.
+(
+nu EmptySlot(empty: Bool = false) .
+(
+    forall k, a, b: PlateSlot . [(RequestPermission | RoundPermitted | LoadingPosition(k) | ConveyorPosition(Table1, a) | ConveyorPosition(Table2, b))] EmptySlot(k == Empty)
+    && [(exists oid: OrderID, pl: Plate . (LoadPlate(oid) | PlateLoaded(pl)))] (val(empty) && EmptySlot(false))
+    && [((exists pos: Position . Advance(pos)) || (EndEmergency | EmergencyCleared(ConveyorStation) | EmergencyCleared(Kitchen) | EmergencyCleared(TableStation(Table1)) | EmergencyCleared(TableStation(Table2))))] EmptySlot(false)
+    && [!((exists k, a, b: PlateSlot . (RequestPermission | RoundPermitted | LoadingPosition(k) | ConveyorPosition(Table1, a) | ConveyorPosition(Table2, b))) || (exists oid: OrderID, pl: Plate . (LoadPlate(oid) | PlateLoaded(pl))) || (exists pos: Position . Advance(pos)) || (EndEmergency | EmergencyCleared(ConveyorStation) | EmergencyCleared(Kitchen) | EmergencyCleared(TableStation(Table1)) | EmergencyCleared(TableStation(Table2))))] EmptySlot(empty)
+)
+)
+% END CHECK
+&&
+% CHECK: stopped
+% A load cannot occur between movement and the next stop.
+(
+[true* . (StartConveyor || (exists pos: Position . Advance(pos))) . (!StopConveyor)* . (exists oid: OrderID, pl: Plate . (LoadPlate(oid) | PlateLoaded(pl)))] false
+)
+% END CHECK

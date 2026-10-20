@@ -1,0 +1,72 @@
+\begin{table}[H]
+\centering
+\caption{Fresh shared graph generation and reduction.}\label{tab:graphresults}
+\begin{tabular}{@{}lrr@{}}
+\toprule Graph & States & Transitions \\ \midrule
+Complete & 5,915,640 & 17,854,674 \\
+Strong-bisimulation quotient & 2,466,516 & 7,395,390 \\
+\bottomrule\end{tabular}
+\end{table}
+\begin{table}[H]
+\centering
+\caption{Shared preprocessing wall times, separate from property checks.}\label{tab:preprocessing}
+\begin{tabular}{@{}lrr@{}}
+\toprule Stage & Seconds & Exit code \\ \midrule
+\texttt{mcrl22lps} & 0.12 & 0 \\
+\texttt{lpsconstelm} & 0.04 & 0 \\
+\texttt{lpssumelm} & 0.01 & 0 \\
+\texttt{lps2lts} & 57.02 & 0 \\
+\texttt{ltsconvert} & 32.19 & 0 \\
+\midrule Five-command total span & 89.439 & \\
+\bottomrule\end{tabular}
+\end{table}
+The two additional \texttt{ltsinfo} inspections took 17.11 and 9.20 seconds and are excluded from the graph-generation and property totals. Their logs confirm the counts above.
+The reported suite completed all fourteen selected native checks: 14 PASS, 0 FAIL, and 0 INCONCLUSIVE. The table contains no historical outcomes.
+R12 uses the user-approved finite order-ID guard in its first conjunct. Its original attempt without an explicit ID guard was interrupted without an answer after 5596.490 seconds (93 minutes 16 seconds); the solver stage took 5261.74 seconds and exited 143. That attempt remains INCONCLUSIVE in the original records and is not counted as the revised check time. The separate revision reuses the fresh graph from this campaign, whose model and graph hashes match; it changes no English requirement or model behaviour. Both attempts are preserved in the evidence.
+\Needspace{300pt}
+\begingroup\small
+\begin{longtable}{@{}p{0.13\textwidth}p{0.15\textwidth}p{0.21\textwidth}p{0.17\textwidth}p{0.19\textwidth}@{}}
+\caption{Fresh results for complete R1--R14 formulas.}\label{tab:results}\\
+\toprule Requirement & Formula & Outcome & Total check time (s) & Evidence \\ \midrule\endfirsthead
+\toprule Requirement & Formula & Outcome & Total check time (s) & Evidence \\ \midrule\endhead
+\bottomrule\endlastfoot
+\ref{req:r1} & Listing~\ref{lst:r1} & PASS & 515.052 & \href{../verification/original/logs/R1.pbessolve.log}{R1 native log} \\
+\ref{req:r2} & Listing~\ref{lst:r2} & PASS & 79.130 & \href{../verification/original/logs/R2.pbessolve.log}{R2 native log} \\
+\ref{req:r3} & Listing~\ref{lst:r3} & PASS & 479.073 & \href{../verification/original/logs/R3.pbessolve.log}{R3 native log} \\
+\ref{req:r4} & Listing~\ref{lst:r4} & PASS & 342.973 & \href{../verification/original/logs/R4.pbessolve.log}{R4 native log} \\
+\ref{req:r5} & Listing~\ref{lst:r5} & PASS & 183.980 & \href{../verification/original/logs/R5.pbessolve.log}{R5 native log} \\
+\ref{req:r6} & Listing~\ref{lst:r6} & PASS & 1426.620 & \href{../verification/original/logs/R6.pbessolve.log}{R6 native log} \\
+\ref{req:r7} & Listing~\ref{lst:r7} & PASS & 1191.969 & \href{../verification/original/logs/R7.pbessolve.log}{R7 native log} \\
+\ref{req:r8} & Listing~\ref{lst:r8} & PASS & 1144.686 & \href{../verification/original/logs/R8.pbessolve.log}{R8 native log} \\
+\ref{req:r9} & Listing~\ref{lst:r9} & PASS & 157.185 & \href{../verification/original/logs/R9.pbessolve.log}{R9 native log} \\
+\ref{req:r10} & Listing~\ref{lst:r10} & PASS & 99.893 & \href{../verification/original/logs/R10.pbessolve.log}{R10 native log} \\
+\ref{req:r11} & Listing~\ref{lst:r11} & PASS & 253.523 & \href{../verification/original/logs/R11.pbessolve.log}{R11 native log} \\
+\ref{req:r12} & Listing~\ref{lst:r12} & PASS & 492.164 & \href{../verification/r12-guarded/logs/R12.pbessolve.log}{R12 native log} \\
+\ref{req:r13} & Listing~\ref{lst:r13} & PASS & 321.313 & \href{../verification/original/logs/R13.pbessolve.log}{R13 native log} \\
+\ref{req:r14} & Listing~\ref{lst:r14} & PASS & 66.067 & \href{../verification/original/logs/R14.pbessolve.log}{R14 native log} \\
+\end{longtable}
+\endgroup
+The evidence links point to the native solver log, or the last attempted stage after a tool failure. Commands, stage timings and exit codes are retained with the native solver logs in \path{verification/}. Large intermediate files and verbose rewriting logs are omitted from Git; the original full run remains available locally. The logs are evidence of a Boolean answer; no state-space counterexample is implied merely by a solver log.
+\begingroup\small
+\begin{longtable}{@{}lrrrrr@{}}
+\caption{Per-property stage wall times in seconds.}\label{tab:stagetimes}\\
+\toprule & \texttt{lts2pbes} & \texttt{pbesrewr} & \texttt{pbesparelm} & \texttt{pbessolve} & Total span \\ \midrule\endfirsthead
+\toprule & \texttt{lts2pbes} & \texttt{pbesrewr} & \texttt{pbesparelm} & \texttt{pbessolve} & Total span \\ \midrule\endhead
+\bottomrule\endlastfoot
+R1 & 192.29 & 88.09 & 98.37 & 136.21 & 515.052 \\
+R2 & 33.21 & 11.71 & 11.71 & 22.45 & 79.130 \\
+R3 & 170.89 & 72.44 & 82.75 & 152.35 & 479.073 \\
+R4 & 171.87 & 48.53 & 59.42 & 62.48 & 342.973 \\
+R5 & 67.62 & 31.49 & 35.26 & 49.53 & 183.980 \\
+R6 & 670.68 & 183.66 & 210.21 & 361.30 & 1426.620 \\
+R7 & 634.02 & 145.81 & 173.85 & 237.15 & 1191.969 \\
+R8 & 499.29 & 172.88 & 182.98 & 289.42 & 1144.686 \\
+R9 & 69.79 & 24.47 & 24.23 & 38.64 & 157.185 \\
+R10 & 48.08 & 13.08 & 13.89 & 24.79 & 99.893 \\
+R11 & 90.39 & 37.43 & 75.18 & 46.70 & 253.523 \\
+R12 & 179.31 & 80.03 & 100.32 & 131.87 & 492.164 \\
+R13 & 131.86 & 55.67 & 56.48 & 77.23 & 321.313 \\
+R14 & 21.18 & 11.13 & 11.93 & 21.77 & 66.067 \\
+\end{longtable}
+\endgroup
+The stage tool times are printed to two decimal places; total spans include shell overhead and are recorded to three decimal places. A dash denotes a stage not completed or not attempted, rather than zero time.

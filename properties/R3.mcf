@@ -1,0 +1,20 @@
+% R3: Each order may be loaded at most once and delivered at most once.
+% Scope: six belt positions, two tables, three total orders; atomic events.
+
+% CHECK: one-load
+% For each admitted order number, forbid a second load.
+(
+forall oid: OrderID . (val(oid < maxOrders) =>
+[true* . (exists pl: Plate . (LoadPlate(oid) | PlateLoaded(pl))) . true* .
+         (exists pl: Plate . (LoadPlate(oid) | PlateLoaded(pl)))] false)
+)
+% END CHECK
+&&
+% CHECK: one-delivery
+% Forbid a second delivery of the same order, even with a different tag.
+(
+forall oid: OrderID . (val(oid < maxOrders) =>
+[true* . (exists at, tag: TableID . (Push(at) | BoxFilled(at) | PlateTransferred(at, plate(oid, tag)))) . true* .
+         (exists at, tag: TableID . (Push(at) | BoxFilled(at) | PlateTransferred(at, plate(oid, tag))))] false)
+)
+% END CHECK

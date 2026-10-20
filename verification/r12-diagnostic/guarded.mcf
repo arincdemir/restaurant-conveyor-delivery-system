@@ -1,0 +1,23 @@
+% R12: Every loaded plate can reach its tagged box without requiring an emergency. After delivery, collection must remain possible.
+% Scope: six belt positions, two tables, three total orders; atomic events.
+% Capability: a successful path exists; this does not promise service on every execution.
+
+% CHECK: delivery-capability
+% Only IDs below maxOrders can be loaded in this bounded model.
+% For every actual load, exhibit a path to its tagged box without a new emergency. Collection of other plates may occur.
+(
+forall oid: OrderID, tbl: TableID . (val(oid < maxOrders) =>
+[true* . (LoadPlate(oid) | PlateLoaded(plate(oid, tbl)))]
+<(!StartEmergency)* . (Push(tbl) | BoxFilled(tbl) | PlateTransferred(tbl, plate(oid, tbl)))> true
+)
+)
+% END CHECK
+&&
+% CHECK: collection-capability
+% At every state after delivery and before collection, collection is still reachable. Operator clearance and reset may occur.
+(
+forall tbl: TableID .
+[true* . (exists pl: Plate . (Push(tbl) | BoxFilled(tbl) | PlateTransferred(tbl, pl))) . (!BoxEmptied(tbl))*]
+<true* . BoxEmptied(tbl)> true
+)
+% END CHECK

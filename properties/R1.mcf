@@ -1,0 +1,26 @@
+% R1: A box's two gates must never be open together.
+% Scope: six belt positions, two tables, three total orders; atomic events.
+
+% CHECK: initial-inner-gate
+% The inner gate starts open: close it before opening the outer gate.
+(
+forall tbl: TableID .
+[(!CloseInnerGate(tbl))* . OpenOuterGate(tbl)] false
+)
+% END CHECK
+&&
+% CHECK: inner-to-outer
+% After opening the inner gate, forbid outer opening until inner closure.
+(
+forall tbl: TableID .
+[true* . OpenInnerGate(tbl) . (!CloseInnerGate(tbl))* . OpenOuterGate(tbl)] false
+)
+% END CHECK
+&&
+% CHECK: outer-to-inner
+% After opening the outer gate, forbid inner opening until outer closure.
+(
+forall tbl: TableID .
+[true* . OpenOuterGate(tbl) . (!CloseOuterGate(tbl))* . OpenInnerGate(tbl)] false
+)
+% END CHECK

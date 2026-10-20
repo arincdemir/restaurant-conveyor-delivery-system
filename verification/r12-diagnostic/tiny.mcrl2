@@ -1,0 +1,17 @@
+sort
+  OrderID = Nat;
+  TableID = struct Table1 | Table2;
+  Plate = struct plate(o_id: OrderID, t_id: TableID);
+map maxOrders: Nat;
+eqn maxOrders = 3;
+act
+  LoadPlate: OrderID;
+  PlateLoaded: Plate;
+  Push, BoxFilled, BoxEmptied: TableID;
+  PlateTransferred: TableID # Plate;
+  StartEmergency;
+proc Cycle =
+  (LoadPlate(0) | PlateLoaded(plate(0, Table1))) .
+  (Push(Table1) | BoxFilled(Table1) | PlateTransferred(Table1, plate(0, Table1))) .
+  BoxEmptied(Table1) . Cycle;
+init Cycle;

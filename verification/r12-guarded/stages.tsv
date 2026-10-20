@@ -1,0 +1,5 @@
+scope	stage	exit_code	real_seconds	command
+R12	lts2pbes	0	179.31	lts2pbes --verbose --preprocess-modal-operators --formula=../properties/R12.mcf reduced.lts R12.pbes 
+R12	pbesrewr	0	80.03	pbesrewr --verbose --pbes-rewriter=quantifier-one-point R12.pbes R12.one.pbes 
+R12	pbesparelm	0	100.32	pbesparelm --verbose R12.one.pbes R12.optimized.pbes 
+R12	pbessolve	0	131.87	pbessolve --verbose --rewriter=jittyc --solve-strategy=0 R12.optimized.pbes 

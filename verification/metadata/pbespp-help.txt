@@ -1,0 +1,36 @@
+Usage: /Applications/mCRL2.app/Contents/bin/pbespp [OPTION]... [INFILE [OUTFILE]]
+Print the PBES in INFILE to OUTFILE in a human readable format. If OUTFILE is 
+not present, stdout is used. If INFILE is not present, stdin is used.
+
+Options:
+  -fFORMAT, --format=FORMAT
+                           print the PBES in the specified FORMAT:
+                             'default' a PBES specification (default)
+                             'internal' a textual ATerm representation of the 
+                               internal format
+  -iFORMAT, --in=FORMAT    use input format FORMAT:
+                             'pbes' PBES in internal format (default)
+                             'pgsolver' BES in PGSolver format
+                             'text' PBES in textual (mCRL2) format
+  -p, --pfnf-printer       format the output according to the structure of PFNF 
+                           (only has an effect when printing a PBES in PFNF to 
+                           text)
+      --timings[=FILE]     append timing measurements to FILE. Measurements are 
+                           written to standard error if no FILE is provided
+  -x, --no-precedence-aware
+                           disable printing with precedence aware enabled
+
+Standard options:
+  -q, --quiet              do not display warning messages
+  -v, --verbose            display short log messages
+  -d, --debug              display detailed log messages
+      --log-level=LEVEL    display log messages up to and including level; 
+                           either warn, verbose, debug or trace
+  -h, --help               display help information
+      --version            display version information
+      --help-all           display help information, including hidden and 
+                           experimental options
+
+Report bugs at <http://www.mcrl2.org/issuetracker>.
+
+See also the manual at <http://www.mcrl2.org/web/user_manual/tools/release/pbespp.html>.

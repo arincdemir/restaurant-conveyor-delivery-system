@@ -1,0 +1,34 @@
+Usage: ltsinfo [OPTION]... [INFILE]
+Print information about the labelled transition system (LTS) in INFILE. If 
+INFILE is not supplied, stdin is used.
+
+The format of INFILE is determined by its contents. The option --in can be used 
+to force the format for INFILE. The supported formats are:
+  'aut' for the Aldebaran format (CADP),
+  'dot' for the GraphViz format (no longer supported as input format),
+  'fsm' for the Finite State Machine format, or
+  'lts' for the mCRL2 LTS format
+
+Options:
+  -a, --action-label       print the labels of actions
+  -b, --branching-factor   print the average, minimal and maximal branching 
+                           factor
+  -iFORMAT, --in=FORMAT    use FORMAT as the input format
+  -l, --state-label        print the labels of states
+      --timings[=FILE]     append timing measurements to FILE. Measurements are 
+                           written to standard error if no FILE is provided
+
+Standard options:
+  -q, --quiet              do not display warning messages
+  -v, --verbose            display short log messages
+  -d, --debug              display detailed log messages
+      --log-level=LEVEL    display log messages up to and including level; 
+                           either warn, verbose, debug or trace
+  -h, --help               display help information
+      --version            display version information
+      --help-all           display help information, including hidden and 
+                           experimental options
+
+Report bugs at <http://www.mcrl2.org/issuetracker>.
+
+See also the manual at <http://www.mcrl2.org/web/user_manual/tools/release/ltsinfo.html>.

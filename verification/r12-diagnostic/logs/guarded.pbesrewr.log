@@ -1,0 +1,8 @@
+Guessing output format: PBES in internal format
+Guessing input format: PBES in internal format
+pbesrewr parameters:
+  input file:         guarded.pbes
+  output file:        guarded.one.pbes
+  pbes rewriter:      quantifier-one-point
+Loading PBES in pbes format...
+Saving result in pbes format...

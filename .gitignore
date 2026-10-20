@@ -1,0 +1,41 @@
+# Local OS/editor artifacts
+.DS_Store
+__pycache__/
+*.pyc
+
+# Generated native verification artifacts
+*.lps
+*.lts
+*.pbes
+jittyc_*
+*.cpp.bin
+/verification-clean/
+/verification-report-*/
+/verification-R12-original-retry-*/
+/verification-local-*/
+/diagnostics-R12-*/
+/LATEST_R12_*.txt
+/results/
+
+# Superseded requirements/properties retained locally
+/PROPOSED_REQUIREMENTS.md
+/properties/REQUIREMENTS_REVIEW.md
+/properties/exampleProperty.mcf
+/properties/S*.mcf
+/properties/F*.mcf
+/properties/archive/
+/properties/drafts/
+/scripts/archive/
+/scripts/verify_requirements.py
+/scripts/test_requirement_properties.py
+/scripts/summarize_requirement_results.py
+/scripts/finish_requirement_checks.py
+
+# LaTeX build products (the report PDF is deliberately versioned)
+/report/build/
+*.aux
+*.toc
+*.out
+*.fls
+*.fdb_latexmk
+*.synctex.gz

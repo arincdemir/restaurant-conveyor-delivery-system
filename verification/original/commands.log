@@ -1,0 +1,63 @@
+mcrl22lps --lin-method=regular ../restaurant-conveyor-delivery-system_spec.mcrl2 model.lps 
+lpsconstelm model.lps model.const.lps 
+lpssumelm model.const.lps model.ready.lps 
+lps2lts --cached --rewriter=jittyc --verbose model.ready.lps complete.lts 
+ltsconvert --equivalence=bisim complete.lts reduced.lts 
+ltsinfo complete.lts 
+ltsinfo reduced.lts 
+lts2pbes --verbose --preprocess-modal-operators --formula=../properties/R1.mcf reduced.lts R1.pbes 
+pbesrewr --verbose --pbes-rewriter=quantifier-one-point R1.pbes R1.one.pbes 
+pbesparelm --verbose R1.one.pbes R1.optimized.pbes 
+pbessolve --verbose --rewriter=jittyc --solve-strategy=0 R1.optimized.pbes 
+lts2pbes --verbose --preprocess-modal-operators --formula=../properties/R2.mcf reduced.lts R2.pbes 
+pbesrewr --verbose --pbes-rewriter=quantifier-one-point R2.pbes R2.one.pbes 
+pbesparelm --verbose R2.one.pbes R2.optimized.pbes 
+pbessolve --verbose --rewriter=jittyc --solve-strategy=0 R2.optimized.pbes 
+lts2pbes --verbose --preprocess-modal-operators --formula=../properties/R3.mcf reduced.lts R3.pbes 
+pbesrewr --verbose --pbes-rewriter=quantifier-one-point R3.pbes R3.one.pbes 
+pbesparelm --verbose R3.one.pbes R3.optimized.pbes 
+pbessolve --verbose --rewriter=jittyc --solve-strategy=0 R3.optimized.pbes 
+lts2pbes --verbose --preprocess-modal-operators --formula=../properties/R4.mcf reduced.lts R4.pbes 
+pbesrewr --verbose --pbes-rewriter=quantifier-one-point R4.pbes R4.one.pbes 
+pbesparelm --verbose R4.one.pbes R4.optimized.pbes 
+pbessolve --verbose --rewriter=jittyc --solve-strategy=0 R4.optimized.pbes 
+lts2pbes --verbose --preprocess-modal-operators --formula=../properties/R5.mcf reduced.lts R5.pbes 
+pbesrewr --verbose --pbes-rewriter=quantifier-one-point R5.pbes R5.one.pbes 
+pbesparelm --verbose R5.one.pbes R5.optimized.pbes 
+pbessolve --verbose --rewriter=jittyc --solve-strategy=0 R5.optimized.pbes 
+lts2pbes --verbose --preprocess-modal-operators --formula=../properties/R6.mcf reduced.lts R6.pbes 
+pbesrewr --verbose --pbes-rewriter=quantifier-one-point R6.pbes R6.one.pbes 
+pbesparelm --verbose R6.one.pbes R6.optimized.pbes 
+pbessolve --verbose --rewriter=jittyc --solve-strategy=0 R6.optimized.pbes 
+lts2pbes --verbose --preprocess-modal-operators --formula=../properties/R7.mcf reduced.lts R7.pbes 
+pbesrewr --verbose --pbes-rewriter=quantifier-one-point R7.pbes R7.one.pbes 
+pbesparelm --verbose R7.one.pbes R7.optimized.pbes 
+pbessolve --verbose --rewriter=jittyc --solve-strategy=0 R7.optimized.pbes 
+lts2pbes --verbose --preprocess-modal-operators --formula=../properties/R8.mcf reduced.lts R8.pbes 
+pbesrewr --verbose --pbes-rewriter=quantifier-one-point R8.pbes R8.one.pbes 
+pbesparelm --verbose R8.one.pbes R8.optimized.pbes 
+pbessolve --verbose --rewriter=jittyc --solve-strategy=0 R8.optimized.pbes 
+lts2pbes --verbose --preprocess-modal-operators --formula=../properties/R9.mcf reduced.lts R9.pbes 
+pbesrewr --verbose --pbes-rewriter=quantifier-one-point R9.pbes R9.one.pbes 
+pbesparelm --verbose R9.one.pbes R9.optimized.pbes 
+pbessolve --verbose --rewriter=jittyc --solve-strategy=0 R9.optimized.pbes 
+lts2pbes --verbose --preprocess-modal-operators --formula=../properties/R10.mcf reduced.lts R10.pbes 
+pbesrewr --verbose --pbes-rewriter=quantifier-one-point R10.pbes R10.one.pbes 
+pbesparelm --verbose R10.one.pbes R10.optimized.pbes 
+pbessolve --verbose --rewriter=jittyc --solve-strategy=0 R10.optimized.pbes 
+lts2pbes --verbose --preprocess-modal-operators --formula=../properties/R11.mcf reduced.lts R11.pbes 
+pbesrewr --verbose --pbes-rewriter=quantifier-one-point R11.pbes R11.one.pbes 
+pbesparelm --verbose R11.one.pbes R11.optimized.pbes 
+pbessolve --verbose --rewriter=jittyc --solve-strategy=0 R11.optimized.pbes 
+lts2pbes --verbose --preprocess-modal-operators --formula=../properties/R12.mcf reduced.lts R12.pbes 
+pbesrewr --verbose --pbes-rewriter=quantifier-one-point R12.pbes R12.one.pbes 
+pbesparelm --verbose R12.one.pbes R12.optimized.pbes 
+pbessolve --verbose --rewriter=jittyc --solve-strategy=0 R12.optimized.pbes 
+lts2pbes --verbose --preprocess-modal-operators --formula=../properties/R13.mcf reduced.lts R13.pbes 
+pbesrewr --verbose --pbes-rewriter=quantifier-one-point R13.pbes R13.one.pbes 
+pbesparelm --verbose R13.one.pbes R13.optimized.pbes 
+pbessolve --verbose --rewriter=jittyc --solve-strategy=0 R13.optimized.pbes 
+lts2pbes --verbose --preprocess-modal-operators --formula=../properties/R14.mcf reduced.lts R14.pbes 
+pbesrewr --verbose --pbes-rewriter=quantifier-one-point R14.pbes R14.one.pbes 
+pbesparelm --verbose R14.one.pbes R14.optimized.pbes 
+pbessolve --verbose --rewriter=jittyc --solve-strategy=0 R14.optimized.pbes 

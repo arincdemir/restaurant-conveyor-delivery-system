@@ -1,0 +1,3 @@
+145cc14e4efcd065b7cd15068c8b0bc8bcdaecc198070f6e4d68b8cfe5a90fae  restaurant-conveyor-delivery-system_spec.mcrl2
+3443824ce8a989047be4f6f8c3071cc47aef66a535951fcf57787eb7c7d65723  properties/R12.mcf
+0462b1e1cb562d09abc53865c74513bff1dcad0a457b2276874504918366e640  properties/requirements.json

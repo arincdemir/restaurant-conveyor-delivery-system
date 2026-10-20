@@ -1,0 +1,123 @@
+Usage: mcrl22lps [OPTION]... [INFILE [OUTFILE]]
+Linearises the mCRL2 specification in INFILE and writes the resulting LPS to 
+OUTFILE. If OUTFILE is not present, stdout is used. If INFILE is not present, 
+stdin is used.
+
+Options:
+  -a, --statenames         the name of the variable encoding the state of a 
+                           parallel process has the shape "si", with i an 
+                           optional number. Using this flag this name is "Pi", 
+                           where P is the nameof the process. This makes it 
+                           easier to determine to which process the state 
+                           variable belongs from.
+  -b, --binary             when clustering use binary case functions instead of 
+                           n-ary; in the presence of -w/--newstate, state 
+                           variables are encoded by a vector of boolean 
+                           variables
+      --balance-summands   transform inputs expressions p1 + ... + pn into a 
+                           balanced tree before linearising. Sometimes helpful 
+                           in preventing stack overflow.
+  -c, --cluster            all actions in the final LPS are clustered. 
+                           Clustering means that summands with the same action 
+                           labels are grouped together. For instance, a(f1) . 
+                           P(g1) + a(f2) . P(g2) is replaced by sum b: Bool . 
+                           a(if(b, f1, f2)) . P(if(b, g1, g2)). The advantage 
+                           is that the number of summands can be reduced 
+                           subtantially in this way. The disadvantage is that 
+                           sum operators are introduced and new data sorts with 
+                           auxiliary functions are generated. In order to avoid 
+                           the generation of new sorts, the option -b/--binary 
+                           can be used.
+  -D, --delta              add a true->delta summands to each state in each 
+                           process; these delta's subsume all other conditional 
+                           timed delta's, effectively reducing the number of 
+                           delta summands drastically in the resulting linear 
+                           process; speeds up linearisation. This is the 
+                           default, but it does not deal correctly with time.
+  -e, --check-only         check syntax and static semantics; do not linearise
+  -f, --no-globvars        instantiate don't care values with arbitrary 
+                           constants, instead of modelling them by global 
+                           variables. This has no effecton global variables 
+                           that are declared in the specification.
+  -g, --no-deltaelm        avoid removing spurious delta summands. Due to the 
+                           existence of time, delta summands cannot be omitted. 
+                           Due to the presence of multi-actions the number of 
+                           summands can be huge. The algorithm for removing 
+                           delta summands simply works by comparing each delta 
+                           summand with each other summand to see whether the 
+                           condition of the one implies the condition of the 
+                           other. Clearly, this has quadratic complexity, and 
+                           can take a long time.
+  -lNAME, --lin-method=NAME
+                           use linearisation method NAME:
+                             'regular' for generating an LPS in regular form 
+                               (specification should be regular) (default)
+                             'regular2' for a variant of 'regular' that uses more 
+                               data variables (useful when 'regular' does not work)
+                             'stack' for using stack data types (useful when 
+                               'regular' and 'regular2' do not work)
+  -m, --no-sumelm          avoid applying sum elimination in parallel 
+                           composition
+  -n, --no-cluster         the actions in intermediate LPSs are not clustered 
+                           before they are put in parallel. By default these 
+                           processes are clustered to avoid a blow-up in the 
+                           number of summands when transforming two parallel 
+                           linear processes into a single linear process. If a 
+                           linear process with M summands is put in parallel 
+                           with a linear process with N summands the resulting 
+                           process has M×N + M + N summands. Both M and N can 
+                           be substantially reduced by clustering at the cost 
+                           of introducing new sorts and functions. See 
+                           -c/--cluster, esp. for a short explanation of the 
+                           clustering process.
+      --no-constelm        do not try to apply constant elimination when 
+                           generating a linear process.
+  -o, --no-rewrite         do not rewrite data terms while linearising; useful 
+                           when the rewrite system does not terminate. This 
+                           option also switches off the application of constant 
+                           elimination.
+  -QNUM, --qlimit=NUM      limit enumeration of universal and existential 
+                           quantifiers in data expressions to NUM iterations 
+                           (default NUM=10, NUM=0 for unlimited).
+  -rNAME, --rewriter=NAME  use rewrite strategy NAME:
+                             'jitty' jitty rewriting (default)
+                             'jittyc' compiled jitty rewriting
+                             'jittyp' jitty rewriting with prover
+  -T, --timed              Translate the process to linear form preserving all 
+                           timed information. In parallel processes the number 
+                           of possible time constraints can be large, slowing 
+                           down linearisation. Confer the --delta option which 
+                           yiels a much faster translation that does not 
+                           preserve timing correctly
+      --timings[=FILE]     append timing measurements to FILE. Measurements are 
+                           written to standard error if no FILE is provided
+  -w, --newstate           state variables are encoded using enumerated types 
+                           instead of positive natural numbers (Pos). By using 
+                           this option new finite sorts named Enumk are 
+                           generated where k is the size of the domain. Also, 
+                           auxiliary case functions and equalities are defined. 
+                           In combination with the option --binary the finite 
+                           sorts are encoded by booleans. (requires 
+                           linearisation method 'regular' or 'regular2').
+  -z, --no-alpha           alphabet reductions are not applied. By default 
+                           mcrl22lps attempts to distribute communication, 
+                           hiding and allow operators over the parallel 
+                           composition operator as this reduces the size of 
+                           intermediate linear processes. By using this option, 
+                           this step can be avoided. The name stems from the 
+                           alphabet axioms in process algebra.
+
+Standard options:
+  -q, --quiet              do not display warning messages
+  -v, --verbose            display short log messages
+  -d, --debug              display detailed log messages
+      --log-level=LEVEL    display log messages up to and including level; 
+                           either warn, verbose, debug or trace
+  -h, --help               display help information
+      --version            display version information
+      --help-all           display help information, including hidden and 
+                           experimental options
+
+Report bugs at <http://www.mcrl2.org/issuetracker>.
+
+See also the manual at <http://www.mcrl2.org/web/user_manual/tools/release/mcrl22lps.html>.

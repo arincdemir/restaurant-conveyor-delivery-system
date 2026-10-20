@@ -1,0 +1,25 @@
+ M properties/CATALOG.md
+ M properties/README.md
+ M restaurant-conveyor-delivery-system.mcrl2proj
+?? properties/NATIVE_VERIFICATION.md
+?? properties/R1.mcf
+?? properties/R10.mcf
+?? properties/R11.mcf
+?? properties/R12.mcf
+?? properties/R13.mcf
+?? properties/R14.mcf
+?? properties/R2.mcf
+?? properties/R3.mcf
+?? properties/R4.mcf
+?? properties/R5.mcf
+?? properties/R6.mcf
+?? properties/R7.mcf
+?? properties/R8.mcf
+?? properties/R9.mcf
+?? properties/SEMANTICS.md
+?? properties/archive/
+?? properties/drafts/
+?? properties/requirements.json
+?? scripts/
+?? verification-clean/
+?? verification-report-20261019T150039Z/

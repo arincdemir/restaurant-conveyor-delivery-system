@@ -1,7 +1,0 @@
-% S1: opening either gate requires its paired gate to have closed; inner starts open.
-forall tbl: TableID .
-(
-    [(!CloseInnerGate(tbl))* . OpenOuterGate(tbl)] false
-    && [true* . OpenInnerGate(tbl) . (!CloseInnerGate(tbl))* . OpenOuterGate(tbl)] false
-    && [true* . OpenOuterGate(tbl) . (!CloseOuterGate(tbl))* . OpenInnerGate(tbl)] false
-)

@@ -1,0 +1,17 @@
+% R10: Reset requires all controllers to have received the current emergency notification and the operator to have cleared that emergency.
+% Scope: six belt positions, two tables, three total orders; atomic events.
+
+% CHECK: reset-phase
+% One four-state monitor: 0 normal, 1 requested, 2 all notified, 3 cleared.
+(
+nu ResetPhase(stage: Nat = 0) .
+(
+    [StartEmergency] (val(stage == 0) && ResetPhase(1))
+    && [(EmergencyReceived(ConveyorStation) | EmergencyReceived(Kitchen) | EmergencyReceived(TableStation(Table1)) | EmergencyReceived(TableStation(Table2)))] (val(stage == 1) && ResetPhase(2))
+    && [OperatorClearEmergency] (val(stage == 2) && ResetPhase(3))
+    && [(EndEmergency | EmergencyCleared(ConveyorStation) | EmergencyCleared(Kitchen) | EmergencyCleared(TableStation(Table1)) | EmergencyCleared(TableStation(Table2)))] (val(stage == 3) && ResetPhase(0))
+    && [!(StartEmergency || (EmergencyReceived(ConveyorStation) | EmergencyReceived(Kitchen) | EmergencyReceived(TableStation(Table1)) | EmergencyReceived(TableStation(Table2))) || OperatorClearEmergency || (EndEmergency | EmergencyCleared(ConveyorStation) | EmergencyCleared(Kitchen) | EmergencyCleared(TableStation(Table1)) | EmergencyCleared(TableStation(Table2))))]
+        ResetPhase(stage)
+)
+)
+% END CHECK

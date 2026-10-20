@@ -1,8 +1,0 @@
-% Same S10 guarantee; compact layout of the existing observable multi-actions.
-[true* . StartEmergency .
- (!(EndEmergency | EmergencyCleared(ConveyorStation) | EmergencyCleared(Kitchen) |
-    EmergencyCleared(TableStation(Table1)) | EmergencyCleared(TableStation(Table2))))* .
- (StartConveyor || (exists pos: Position . Advance(pos)) ||
-  (exists oid: OrderID, pl: Plate . (LoadPlate(oid) | PlateLoaded(pl))) ||
-  (exists tbl: TableID, pl: Plate . (Push(tbl) | BoxFilled(tbl) | PlateTransferred(tbl, pl))) ||
-  (exists tbl: TableID . OpenInnerGate(tbl)))] false

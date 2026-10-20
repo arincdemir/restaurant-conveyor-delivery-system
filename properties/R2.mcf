@@ -1,0 +1,11 @@
+% R2: A plate may be delivered only to the table named on its tag.
+% Scope: six belt positions, two tables, three total orders; atomic events.
+% Assumption: the kitchen supplies correct plate tags; acceptance-to-tag matching is outside this check.
+
+% CHECK: tag
+% Reject a delivery whose receiving table differs from its plate tag.
+(
+[true* . (exists tbl: TableID, pl: Plate .
+    val(tbl != t_id(pl)) && (Push(tbl) | BoxFilled(tbl) | PlateTransferred(tbl, pl)))] false
+)
+% END CHECK

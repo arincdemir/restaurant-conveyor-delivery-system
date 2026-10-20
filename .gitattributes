@@ -1,0 +1,5 @@
+# Keep native evidence byte-exact, including original whitespace/line endings.
+verification/** -text -whitespace
+# Suppress noisy carriage-return progress output and historical patch diffs.
+verification/**/*.log -diff
+verification/metadata/git-diff-before.patch -diff

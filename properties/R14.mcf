@@ -1,0 +1,9 @@
+% R14: Every reachable state must have a possible action. Waiting for a customer or operator is allowed if they can still act.
+% Scope: six belt positions, two tables, three total orders; atomic events.
+
+% CHECK: deadlock
+% Every reachable state has at least one outgoing transition.
+(
+[true*] <true> true
+)
+% END CHECK

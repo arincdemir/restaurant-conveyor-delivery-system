@@ -1,0 +1,60 @@
+Usage: pbesrewr [OPTION]... [INFILE [OUTFILE]]
+Rewrite the PBES in INFILE, remove quantified variables and write the resulting 
+PBES to OUTFILE. If INFILE is not present, stdin is used. If OUTFILE is not 
+present, stdout is used.
+
+Options:
+  -iFORMAT, --in=FORMAT    use input format FORMAT:
+                             'pbes' PBES in internal format (default)
+                             'pgsolver' BES in PGSolver format
+                             'text' PBES in textual (mCRL2) format
+  -oFORMAT, --out=FORMAT   use output format FORMAT:
+                             'bes' BES in internal format
+                             'pbes' PBES in internal format (default)
+                             'pgsolver' BES in PGSolver format
+                             'text' PBES in textual (mCRL2) format
+  -pNAME, --pbes-rewriter=NAME
+                           use pbes rewrite strategy NAME:
+                             'simplify' for simplification (default)
+                             'quantifier-all' for eliminating all quantifiers
+                             'quantifier-finite' for eliminating finite 
+                               quantifier variables
+                             'quantifier-inside' for pushing quantifiers inside
+                             'quantifier-one-point' for one point rule quantifier 
+                               elimination
+                             'pfnf' for rewriting into PFNF normal form
+                             'ppg' for rewriting into Parameterised Parity Game 
+                               form
+                             'srf' for rewriting into SRF normal form
+                             'pre-srf' for rewriting into pre-SRF normal form
+                             'prune-dataspec' for removing unused data equations 
+                               and mappings
+                             'bqnf-quantifier' for rewriting quantifiers over 
+                               conjuncts to conjuncts of quantifiers (experimental)
+                             'remove-cex-variables' for removing counterexample 
+                               variables from the right-hand side of each equation, 
+                               i.e., obtaining the core of a pbes
+  -QNUM, --qlimit=NUM      limit enumeration of universal and existential 
+                           quantifiers in data expressions to NUM iterations 
+                           (default NUM=10, NUM=0 for unlimited).
+  -rNAME, --rewriter=NAME  use rewrite strategy NAME:
+                             'jitty' jitty rewriting (default)
+                             'jittyc' compiled jitty rewriting
+                             'jittyp' jitty rewriting with prover
+      --timings[=FILE]     append timing measurements to FILE. Measurements are 
+                           written to standard error if no FILE is provided
+
+Standard options:
+  -q, --quiet              do not display warning messages
+  -v, --verbose            display short log messages
+  -d, --debug              display detailed log messages
+      --log-level=LEVEL    display log messages up to and including level; 
+                           either warn, verbose, debug or trace
+  -h, --help               display help information
+      --version            display version information
+      --help-all           display help information, including hidden and 
+                           experimental options
+
+Report bugs at <http://www.mcrl2.org/issuetracker>.
+
+See also the manual at <http://www.mcrl2.org/web/user_manual/tools/release/pbesrewr.html>.

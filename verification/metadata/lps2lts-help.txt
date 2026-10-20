@@ -1,0 +1,106 @@
+Usage: lps2lts [OPTION]... [INFILE [OUTFILE]]
+Transforms the LPS in INFILE and writes a corresponding LTS  to OUTFILE. If 
+OUTFILE is not present or '-' and an output format is specified, stdout is 
+used. If INFILE is not present or '-', stdin is used.
+
+Options:
+  -aNAMES, --action=NAMES  report actions in the transition system that occur 
+                           in the comma-separated list of action names NAMES. 
+                           The flag --trace can be used to generate traces to 
+                           these actions.
+  -c[NAME], --confluence[=NAME]
+                           apply prioritization of transitions with the action 
+                           label NAME (default 'ctau'). To give priority to tau 
+                           use the flag -ctau. Only if the linear process is 
+                           tau-confluent, the generated state space is 
+                           branching bisimilar to the state space of the lps. 
+                           The generation algorithm that is used does not 
+                           require the linear process to be tau convergent. 
+      --cached             use enumeration caching techniques to speed up state 
+                           space generation. 
+  -D, --deadlock           report deadlocks (i.e. states with no outgoing 
+                           transitions). The flag --trace can be used to 
+                           generate traces to these deadlocks.
+  -F, --divergence         report divergences (i.e. states with a tau loop). 
+                           The algorithm to detect divergences is linear for 
+                           every state, so state space exploration becomes 
+                           quadratic with this option enabled.The flag --trace 
+                           can be used to generate traces to these divergences.
+  -lNUM, --max=NUM         explore at most NUM states
+  -mNAMES, --multiaction=NAMES
+                           report occurrences of multi-actions in the 
+                           transition system that occur in the comma-separated 
+                           list of actions NAMES. Works like --action, except 
+                           that multi-actions are matched exactly, including 
+                           data parameters. The flag --trace can be used to 
+                           generate traces to these multi-actions.
+  -n, --nondeterminism     report nondeterministic states, i.e. states with 
+                           outgoing transitions with the same label to 
+                           different states. The flag --trace can be used to 
+                           generate traces to these nondeterministic states.
+      --no-info            do not add state label information to OUTFILE. This 
+                           option only applies to .lts files.
+      --no-probability-checking
+                           do not check if probabilities in stochastic 
+                           specifications have sensible values
+  -oFORMAT, --out=FORMAT   save the output in the specified FORMAT. 
+  -QNUM, --qlimit=NUM      limit enumeration of universal and existential 
+                           quantifiers in data expressions to NUM iterations 
+                           (default NUM=10, NUM=0 for unlimited).
+  -rNAME, --rewriter=NAME  use rewrite strategy NAME:
+                             'jitty' jitty rewriting (default)
+                             'jittyc' compiled jitty rewriting
+                             'jittyp' jitty rewriting with prover
+  -sNAME, --strategy=NAME  explore the state space using strategy NAME:
+                             'b', 'breadth' breadth-first search (default)
+                             'd', 'depth' depth-first search
+                             'h', 'highway' highway search. Only part of the 
+                               state space is explored, by restricting the size of 
+                               the todo list. N.B. The implementation deviates 
+                               slightly from the published version.
+      --save-at-end        delay saving of the generated LTS until the end. 
+                           This option only applies to .aut and .lts files, 
+                           which are by default saved on the fly.
+      --suppress           in verbose mode, do not print progress messages 
+                           indicating the number of visited states and 
+                           transitions.
+  -t[NUM], --trace[=NUM]   write a trace to states that are reported using one 
+                           of the flags --action, --deadlock, --divergence, 
+                           --multiaction or --nondeterminism. After NUM traces 
+                           have been written state space generation stops. If 
+                           NUM is not supplied the number of traces is not 
+                           limited. For each trace a unique file with extension 
+                           .trc (trace) will be created containing a shortest 
+                           trace starting from the initial state. The traces 
+                           can be pretty printed and converted to other formats 
+                           using tracepp. If the maximum amount of traces has 
+                           been reached, state space generation is aborted. 
+                           There is no guarantee that the traces are fully 
+                           contained in the partial state space.
+      --tau=NAMES          consider actions that occur in the comma-separated 
+                           list of action names NAMES to be internal. This 
+                           setting only affects the option --divergence.
+      --threads=NUM        run with NUM threads (default=1). With multiple 
+                           threads the stack size on a Mac is limited which can 
+                           lead to bus errors. 
+      --timings[=FILE]     append timing measurements to FILE. Measurements are 
+                           written to standard error if no FILE is provided
+      --todo-max=NUM       keep at most NUM states in the todo list; this 
+                           option is only relevant for highway search, where 
+                           NUM is the maximum number of states per level per 
+                           thread. 
+
+Standard options:
+  -q, --quiet              do not display warning messages
+  -v, --verbose            display short log messages
+  -d, --debug              display detailed log messages
+      --log-level=LEVEL    display log messages up to and including level; 
+                           either warn, verbose, debug or trace
+  -h, --help               display help information
+      --version            display version information
+      --help-all           display help information, including hidden and 
+                           experimental options
+
+Report bugs at <http://www.mcrl2.org/issuetracker>.
+
+See also the manual at <http://www.mcrl2.org/web/user_manual/tools/release/lps2lts.html>.

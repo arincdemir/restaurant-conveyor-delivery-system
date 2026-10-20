@@ -1,0 +1,68 @@
+Usage: pbessolve [OPTION]... [INFILE]
+Solves (P)BES from INFILE. If INFILE is not present, stdin is used. The PBES is 
+first instantiated into a parity game, which is then solved using Zielonka's 
+algorithm. It supports the generation of a witness or counter example for the 
+property encoded by the PBES.
+
+Options:
+      --evidence-file=NAME The file to which the evidence is written. If not 
+                           set, a default name will be chosen.
+  -fNAME, --file=NAME      The file containing the LPS or LTS that was used to 
+                           generate the PBES using lps2pbes -c. If this option 
+                           is set, a counter example or witness for the encoded 
+                           property will be generated. The extension of the 
+                           file should be .lps in case of an LPS file, in all 
+                           other cases it is assumed to be an LTS.
+  -iFORMAT, --in=FORMAT    use input format FORMAT:
+                             'pbes' PBES in internal format (default)
+      --original-pbes=NAME In the second round of solving, use a different PBES 
+                           than in the first round. Use case: First solve a 
+                           PBES reduced by the pbesparelm tool, and then use 
+                           the original PBES (provided as --original-pbes) to 
+                           obtain the final solution. The original PBES MUST be 
+                           provided in order to get the right result when 
+                           transformations have been applied.N.B. This has no 
+                           effect when using 
+                           --naive-counter-example-instantiation.
+      --prune-todo-list    Prune the todo list periodically.
+  -QNUM, --qlimit=NUM      limit enumeration of universal and existential 
+                           quantifiers in data expressions to NUM iterations 
+                           (default NUM=10, NUM=0 for unlimited).
+  -rNAME, --rewriter=NAME  use rewrite strategy NAME:
+                             'jitty' jitty rewriting (default)
+                             'jittyc' compiled jitty rewriting
+                             'jittyp' jitty rewriting with prover
+  -sNAME, --solve-strategy=NAME
+                           Use solve strategy NAME. Strategies 1-4 periodically 
+                           apply on-the-fly solving, which may lead to early 
+                           termination.
+                             '0' No on-the-fly solving is applied (default)
+                             '1' Propagate solved equations using an attractor.
+                             '2' Detect winning loops.
+                             '3' Solve subgames using a fatal attractor.
+                             '4' Solve subgames using the solver.
+      --threads=NUM        run with NUM threads (default=1). With multiple 
+                           threads the stack size on a Mac is limited which can 
+                           lead to bus errors. 
+      --timings[=FILE]     append timing measurements to FILE. Measurements are 
+                           written to standard error if no FILE is provided
+  -zNAME, --search-strategy=NAME
+                           Use search strategy NAME:
+                             'breadth-first' Leads to smaller counter examples 
+                               (default)
+                             'depth-first' 
+
+Standard options:
+  -q, --quiet              do not display warning messages
+  -v, --verbose            display short log messages
+  -d, --debug              display detailed log messages
+      --log-level=LEVEL    display log messages up to and including level; 
+                           either warn, verbose, debug or trace
+  -h, --help               display help information
+      --version            display version information
+      --help-all           display help information, including hidden and 
+                           experimental options
+
+Report bugs at <http://www.mcrl2.org/issuetracker>.
+
+See also the manual at <http://www.mcrl2.org/web/user_manual/tools/release/pbessolve.html>.

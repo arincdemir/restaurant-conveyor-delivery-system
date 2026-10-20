@@ -1,0 +1,50 @@
+% R8: Customers may collect only from an occupied box with its outer gate open and its inner gate closed.
+% Scope: six belt positions, two tables, three total orders; atomic events.
+
+% CHECK: initial-occupancy
+% Initially empty boxes cannot be collected before a delivery.
+(
+forall tbl: TableID .
+[(!(exists pl: Plate . (Push(tbl) | BoxFilled(tbl) | PlateTransferred(tbl, pl))))* . BoxEmptied(tbl)] false
+)
+% END CHECK
+&&
+% CHECK: occupied
+% After collection there must be another delivery before the next collection.
+(
+forall tbl: TableID .
+[true* . BoxEmptied(tbl) . (!(exists pl: Plate . (Push(tbl) | BoxFilled(tbl) | PlateTransferred(tbl, pl))))* . BoxEmptied(tbl)] false
+)
+% END CHECK
+&&
+% CHECK: initial-outer
+% Initially closed outer gates must open before collection.
+(
+forall tbl: TableID .
+[(!OpenOuterGate(tbl))* . BoxEmptied(tbl)] false
+)
+% END CHECK
+&&
+% CHECK: outer-open
+% After outer closure, it must reopen before collection.
+(
+forall tbl: TableID .
+[true* . CloseOuterGate(tbl) . (!OpenOuterGate(tbl))* . BoxEmptied(tbl)] false
+)
+% END CHECK
+&&
+% CHECK: initial-inner
+% Initially open inner gates must close before collection.
+(
+forall tbl: TableID .
+[(!CloseInnerGate(tbl))* . BoxEmptied(tbl)] false
+)
+% END CHECK
+&&
+% CHECK: inner-closed
+% After inner opening, it must close before collection.
+(
+forall tbl: TableID .
+[true* . OpenInnerGate(tbl) . (!CloseInnerGate(tbl))* . BoxEmptied(tbl)] false
+)
+% END CHECK

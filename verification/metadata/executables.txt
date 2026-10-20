@@ -1,0 +1,10 @@
+/Applications/mCRL2.app/Contents/bin/mcrl22lps
+/Applications/mCRL2.app/Contents/bin/lpsconstelm
+/Applications/mCRL2.app/Contents/bin/lpssumelm
+/Applications/mCRL2.app/Contents/bin/lps2lts
+/Applications/mCRL2.app/Contents/bin/ltsconvert
+/Applications/mCRL2.app/Contents/bin/lts2pbes
+/Applications/mCRL2.app/Contents/bin/pbesrewr
+/Applications/mCRL2.app/Contents/bin/pbesparelm
+/Applications/mCRL2.app/Contents/bin/pbessolve
+/Applications/mCRL2.app/Contents/bin/ltsinfo
