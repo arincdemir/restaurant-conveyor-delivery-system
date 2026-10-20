@@ -160,21 +160,26 @@ The suite checks safe transport, possible service and recovery, and progress thr
 
 \section{Actions and Data types}
 \label{sec:actions}
-Observable events are the labels matched by the formulas. Internal endpoints synchronize through \texttt{comm}; \texttt{block} prevents unmatched endpoints from proceeding alone. The outer \texttt{allow} retains specified actions and multi-actions. There is no action-hiding transformation in the verification campaign. The distinction between data values and process behaviour follows the book's data and process definitions~\cite[Chs.~3--5]{book}.
+External interactions connect the installation with customers, kitchen staff and the operator. Physical events describe observable operations such as belt movement, gate movement and plate transfer. These observations include kitchen and staff operations; they are not limited to what a seated customer can see. Internal coordination concerns communication and control steps between the modeled components.
 
-\subsection{Observable model events}
+A label being visible in the transition system does not make it external to the installation. The model retains both physical events and selected internal coordination events so that the formulas can check the conditions for safe operation. The tables below distinguish their roles; they do not change which actions occur together.
+
+Communication through \texttt{comm} replaces matched endpoints with a synchronized result. The \texttt{block} operator prevents unmatched endpoints from proceeding alone, while \texttt{allow} retains the specified actions and multi-actions. Hiding would remove selected action names from those labels, producing a silent step when no names remain. No hiding is used in this verification campaign. These distinctions follow the book's treatment of communication, blocking and hiding~\cite[Ch.~5]{book}; the data representations follow its data definitions~\cite[Ch.~3]{book}.
+
+\Needspace{18\baselineskip}
+\subsection{External interactions and physical events}
 
 \begingroup
 \small
 \setlength{\tabcolsep}{4pt}
 \renewcommand{\arraystretch}{1.13}
 \begin{longtable}{@{}>{\raggedright\arraybackslash}p{0.17\textwidth}>{\raggedright\arraybackslash}p{0.32\textwidth}>{\raggedright\arraybackslash}p{0.43\textwidth}@{}}
-\caption{Observable events in the current model}\label{tab:actions}\\
+\caption{External interactions and physical events}\label{tab:actions}\\
 \toprule
 \textbf{Component} & \textbf{Event} & \textbf{Meaning} \\
 \midrule
 \endfirsthead
-\multicolumn{3}{@{}l}{\small Observable events in the current model (continued)}\\
+\multicolumn{3}{@{}l}{\small External interactions and physical events (continued)}\\
 \toprule
 \textbf{Component} & \textbf{Event} & \textbf{Meaning} \\
 \midrule
@@ -185,14 +190,8 @@ Observable events are the labels matched by the formulas. Internal endpoints syn
 \bottomrule
 \endlastfoot
 Order manager & \texttt{AcceptOrder} & Accepts a meal and destination and stores a fresh order number internally. The event itself does not expose that number. \\
-Order manager & \texttt{OrderToKitchen} & Synchronized dispatch and receipt of an accepted order and its recorded meal and destination. \\
 Kitchen & \texttt{AddPlate} & Prepares and associates a plate with an order number and destination. \\
 Kitchen / belt & \texttt{LoadPlate}, \texttt{PlateLoaded} & One synchronized step authorizes loading and inserts the prepared plate into the empty loading slot. \\
-Conveyor & \texttt{RequestPermission}, \texttt{RoundPermitted} & Begin an authorized stopped servicing round; fresh slot information is supplied to the kitchen and both tables in the same step. \\
-Conveyor / kitchen & \texttt{LoadingPosition} & Supplies the actual contents of the loading slot to the kitchen. \\
-Conveyor / box & \texttt{ConveyorPosition} & Supplies a table and the contents of the belt slot aligned with that table. \\
-Station & \texttt{SendSkip} & Marks a skipped kitchen or table operation. It does not itself complete the round. \\
-Station / belt & \texttt{StationDone} & Completes that station's work for the current round. Successful work and skipped work both require this event. \\
 Conveyor & \texttt{StartConveyor}, \texttt{Advance}, \texttt{StopConveyor} & Authorize movement after round completion, rotate all belt contents one indexed position, then stop. Advance carries a modulo-six movement counter. \\
 Box & \texttt{OpenInnerGate}, \texttt{CloseInnerGate} & Open or close the conveyor-side gate of a specified table. \\
 Box & \texttt{OpenOuterGate}, \texttt{CloseOuterGate} & Open or close the customer-side gate of a specified table. \\
@@ -200,15 +199,53 @@ Box / belt & \texttt{Push}, \texttt{BoxFilled}, \texttt{PlateTransferred} & One 
 Box & \texttt{Retract} & Returns the pusher before closing the conveyor-side gate or permitting belt movement. \\
 Customer / box & \texttt{BoxEmptied} & Represents customer collection from an occupied box with its customer-side gate open. \\
 Order manager & \texttt{StartEmergency} & Latches the emergency request and immediately disables normal permissions, without first waiting for station notification. \\
-Controllers & \texttt{EmergencyReceived} & Notifies the conveyor, kitchen, and both boxes together once all reach their modeled notification boundaries. \\
-Kitchen & \texttt{StopLoading} & Records the modeled stop of loading after emergency notification. \\
 Operator & \texttt{OperatorClearEmergency} & Records staff clearance. It does not release normal permissions. \\
-Manager / controllers & \texttt{EndEmergency}, \texttt{EmergencyCleared} & One synchronized reset with the conveyor, kitchen, and both boxes restores normal permissions. \\
+Order manager & \texttt{EndEmergency} & Marks completion of emergency reset and restoration of normal permissions. It occurs together with the four controller reset events in Table~\ref{tab:coordination-actions}. \\
 \end{longtable}
 \endgroup
-\subsection{Internal synchronization}
 
-Unmatched send, receive, request, and permit endpoints are blocked. Their synchronized results are the observable events above. Normal permissions are checked in the same step as the operation, so a permission obtained before an emergency cannot be reused afterwards.
+\Needspace{24\baselineskip}
+\subsection{Internal coordination retained for verification}
+
+These events describe the coordination protocol within the installation. They remain visible to the formulas, even though they are internal to the complete system. For example, a slot report exposes the information passed to a station, and a completion report records that station's reply. A synchronized step may combine roles: reset includes both \texttt{EndEmergency} and the four internal \texttt{EmergencyCleared} events.
+
+\begingroup
+\small
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.13}
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{0.17\textwidth}>{\raggedright\arraybackslash}p{0.32\textwidth}>{\raggedright\arraybackslash}p{0.43\textwidth}@{}}
+\caption{Internal coordination events retained for verification}\label{tab:coordination-actions}\\
+\toprule
+\textbf{Component} & \textbf{Event} & \textbf{Meaning} \\
+\midrule
+\endfirsthead
+\multicolumn{3}{@{}l}{\small Internal coordination events (continued)}\\
+\toprule
+\textbf{Component} & \textbf{Event} & \textbf{Meaning} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{3}{r@{}}{\small Continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Order manager / kitchen & \texttt{OrderToKitchen} & Synchronized dispatch and receipt of an accepted order and its recorded meal and destination. \\
+Conveyor & \texttt{RequestPermission}, \texttt{RoundPermitted} & Begin an authorized stopped servicing round, together with the loading-slot and both table-slot reports. \\
+Conveyor / kitchen & \texttt{LoadingPosition} & Reports the actual contents of the loading slot to the kitchen. \\
+Conveyor / box & \texttt{ConveyorPosition} & Reports a table and the contents of the belt slot aligned with it. \\
+Kitchen & \texttt{CheckPosOne} & Marks the kitchen's check of the loading-slot information it has received. \\
+Station & \texttt{SendSkip} & Marks a skipped kitchen or table operation. It does not itself complete the round. Despite its name, this is a retained event rather than a blocked endpoint. \\
+Station / belt & \texttt{StationDone} & Records completion of that station's work for the current round. Successful and skipped work both require this report. \\
+Controllers & \texttt{EmergencyReceived} & Jointly notifies the conveyor, kitchen and both boxes once all reach their modeled notification boundaries. \\
+Kitchen & \texttt{StopLoading} & Records the kitchen's transition into emergency handling after notification. \\
+Controllers & \texttt{EmergencyCleared} & Jointly resets all four controllers in the same step as \texttt{EndEmergency}. \\
+\end{longtable}
+\endgroup
+
+\Needspace{18\baselineskip}
+\subsection{Internal communication endpoints}
+
+The endpoints in Table~\ref{tab:internal-actions} implement synchronization between components. Unmatched send, receive, request and permit endpoints are blocked; none is named directly in R1--R14. The formulas instead match the completed events, including the internal coordination events above. Normal permissions are checked in the same step as the operation, so a permission obtained before an emergency cannot be reused afterwards.
 
 \begingroup
 \small
@@ -335,6 +372,11 @@ A greatest fixed point, \texttt{nu}, maintains an invariant while updating a sma
 
 Each following listing reads its complete versioned \texttt{.mcf} file, matching the checked revision. R12 uses the separately recorded, user-approved revision with an explicit order-ID guard described in Section~\ref{sec:verification}; the other thirteen formulas are unchanged from the initial snapshot. The \texttt{CHECK} comments name conjuncts for explanation; each file is submitted to \texttt{lts2pbes} as one formula. No conjuncts are checked as separate jobs in this campaign. The pre-run comment in R7 saying it was not yet checked records the input's state when frozen; the fresh outcome is in Section~\ref{sec:verification}.
 
+\subsection{Observations used by the properties}
+The suite checks observable system behaviour together with selected internal coordination conditions, using the distinction in Section~\ref{sec:actions}. R4 uses the round's \texttt{LoadingPosition} report to confirm an empty loading slot; R6 uses \texttt{ConveyorPosition} to identify the aligned plate. Both match the complete round label and invalidate their snapshots on advancement or the complete reset. R7 additionally observes \texttt{StationDone} to check that all three reporting stations have completed the current stop before movement.
+
+R9 and R13 identify reset by the complete label containing \texttt{EndEmergency} and all four \texttt{EmergencyCleared} events. R10 also observes the joint \texttt{EmergencyReceived} notification to check notification, operator clearance and reset in order. These formulas therefore include protocol observations rather than using only external interactions. None names the individual blocked communication endpoints. R14 names no particular event: its \texttt{true} matches every model transition, including internal coordination, so it checks whether some action remains possible rather than whether an external action is immediately possible.
+
 \Needspace{350pt}
 \subsection{R1: Gate interlock}
 \label{formula:r1}
@@ -416,7 +458,7 @@ Requirement~\ref{req:r13}: The first conjunct requires a reset path after every 
 \Needspace{190pt}
 \subsection{R14: No deadlock}
 \label{formula:r14}
-Requirement~\ref{req:r14}: After every finite execution, some transition is enabled. Customer collection and operator clearance count. This forbids terminal states but does not imply eventual delivery or eventual human action.
+Requirement~\ref{req:r14}: After every finite execution, some transition is enabled. Internal coordination, customer collection and operator clearance all count. This forbids terminal states. It does not require an external action to be immediately possible or guarantee eventual delivery or human participation.
 \lstinputlisting[style=checked,caption={Complete formula for R14.},label={lst:r14}]{\checkedinputs/R14.mcf}
 
 \clearpage
@@ -509,6 +551,8 @@ We used \texttt{pbespp} to print both optimized PBESs and \texttt{diff} to compa
 \label{sec:discussion}
 \input{verification-conclusion.tex}
 The safety formulas constrain observable loading, transfer, gate, pusher, collection and emergency sequences within this model. Gate-state histories rely on the stated initial state. Snapshot monitors use the source's synchronized live-slot interface rather than reconstructing all six positions independently. R10 checks notification and clearance ordering; it does not establish physical repairs or button wiring.
+
+The suite also observes selected internal coordination events, as distinguished in Section~\ref{sec:actions}. The results establish system behaviour together with those protocol conditions; they are not an exclusively external-interface verification. The communication endpoints remain composition details, while completed reports and notifications are deliberately visible. No action hiding was used to obtain the reported results.
 
 R11--R13 express capability: each formula asks for a successful preparation, delivery or recovery continuation after each relevant trigger. A customer or operator may act along such a path. The checks do not promise that people actually participate, or that every execution delivers every meal. R14 expresses deadlock freedom but permits endless activity; only R7's normal-stop obligation explicitly excludes endless postponement before advancement or emergency. An infinite sequence of emergencies need not provide end-to-end service.
 
